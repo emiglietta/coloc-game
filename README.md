@@ -1,3 +1,8 @@
+# Disclaimer
+This entire repo has been generated using Cursor AI.
+Local deployment of the app seems to work just fine.
+Instructions for backend creation have not been fully tested.
+
 # coLoc Game (Web)
 
 A collaborative web app for playing the **coLoc** board game—teaching co-localization analysis in microscopy. Game Master runs sessions; teams join with a code, get assigned experiments, and plan acquisition and analysis cards. Review phase uses issue and details cards with a dice roll for experimental details.
@@ -26,6 +31,14 @@ A collaborative web app for playing the **coLoc** board game—teaching co-local
    Use the URL printed in the terminal (e.g. `http://localhost:5173`).
 
 No build step or backend is required for local play. All assets (logo, card images, experiment images) live inside the project under `public/`.
+
+## Security note (npm audit)
+
+If you run `npm audit`, you may see **moderate** vulnerabilities in the dev dependencies (esbuild / Vite). Please be aware:
+
+- **Production builds are not affected.** The issue applies only to the **development server** (`npm run dev`). The built app you deploy is static files and is not vulnerable.
+- **Dev server:** The reported issue could, in theory, allow a malicious website to send requests to your local dev server. For normal use (running the dev server on your own machine, trusted network), the practical risk is low. If you want to be cautious, avoid visiting untrusted websites in the same browser while the dev server is running.
+- **Do not run `npm audit fix --force`** to “fix” these. That would upgrade to a major new Vite version and may break the project. If you decide to address the warnings later, upgrade Vite (and related tools) following the [official Vite migration guide](https://vitejs.dev/guide/migration.html) and test the app and backend integration afterward.
 
 ## How to run the backend and play remotely
 
@@ -109,7 +122,7 @@ Everything needed to run the app is inside this repo: no external file paths or 
 - Socket.io (client + server for remote play)
 - TailwindCSS
 
-Game state is in-memory by default; multiple browser tabs share state only on the same machine. For multi-device play, use the [backend and remote-play steps](#how-to-run-the-backend-and-play-remotely) above.
+Game state is in-memory by default; multiple browser tabs share state only on the same machine. For real multi-device play you’d a backend — use the [backend and remote-play steps](#how-to-run-the-backend-and-play-remotely) above.
 
 ## Deploying so others can join remotely
 
