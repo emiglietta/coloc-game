@@ -1,0 +1,650 @@
+import React from 'react';
+import { useGameStore, availableCards } from './store';
+import { Card, SessionStatus } from './models';
+import { experiments, reviewIssueCards, reviewDetailsCards } from './data';
+
+const phaseLabel: Record<SessionStatus, string> = {
+  setup: 'Setup',
+  'team-formation': 'Team Formation',
+  acquisition: 'Acquisition Planning',
+  analysis: 'Analysis Planning',
+  review: 'Review & Defense',
+  complete: 'Complete'
+};
+
+const categoryColor: Record<Card['category'], string> = {
+  microscopy: 'from-pink-500/80 to-sky-500/80',
+  analysis: 'from-emerald-500/80 to-lime-500/80',
+  details: 'from-amber-400/80 to-yellow-500/80',
+  review: 'from-orange-500/80 to-red-500/80'
+};
+
+function ClockIcons({ count }: { count: number }) {
+  return (
+    <span className="text-xs">
+      {Array.from({ length: count }).map((_, i) => (
+        <span key={i}>⏰</span>
+      ))}
+    </span>
+  );
+}
+
+function CardPill({ card, onClick, selected }: { card: Card; onClick?: () => void; selected?: boolean }) {
+  const hoverText = `${card.name}${card.description ? ` — ${card.description}` : ''} (Time cost: ${card.timeCost} ⏰${card.tags.length ? `; Tags: ${card.tags.join(', ')}` : ''})`;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={hoverText}
+      className={`flex items-center justify-center rounded-lg border border-slate-600/40 bg-slate-900/50 p-1 transition hover:border-slate-500/60 ${
+        selected ? 'ring-2 ring-sky-400' : ''
+      }`}
+    >
+      <div className="flex flex-col items-center">
+        {card.iconPath && (
+          <img
+            src={card.iconPath}
+            alt={card.name}
+            className="h-40 w-40 md:h-48 md:w-48 flex-none rounded-md object-contain"
+          />
+        )}
+      </div>
+    </button>
+  );
+}
+
+export function RoleSelector() {
+  const { role, setRole } = useGameStore();
+  return (
+    <div className="mb-6 flex gap-3">
+      <button
+        type="button"
+        className={`card flex-1 text-center ${role === 'gm' ? 'ring-2 ring-sky-300' : ''}`}
+        onClick={() => setRole('gm')}
+      >
+        <h2 className="text-lg font-semibold">Game Master</h2>
+        <p className="mt-1 text-sm text-slate-100/80">Create and control sessions.</p>
+      </button>
+      <button
+        type="button"
+        className={`card flex-1 text-center ${role === 'team' ? 'ring-2 ring-emerald-300' : ''}`}
+        onClick={() => setRole('team')}
+      >
+        <h2 className="text-lg font-semibold">Team</h2>
+        <p className="mt-1 text-sm text-slate-100/80">Join a session and plan experiments.</p>
+      </button>
+    </div>
+  );
+}
+
+export function GMDashboard() {
+  const {
+    sessions,
+    currentSessionId,
+    createSession,
+    teams,
+    advancePhase,
+    previousPhase,
+    setTeamExperiment,
+    assignReviewerConcern,
+    unassignReviewerConcern,
+    assignReviewerDetail,
+    unassignReviewerDetail
+  } = useGameStore();
+  const session = currentSessionId ? sessions[currentSessionId] : null;
+
+  const [numTeams, setNumTeams] = React.useState(4);
+  const [acqTime, setAcqTime] = React.useState(10);
+  const [analysisTime, setAnalysisTime] = React.useState(10);
+  const [mode, setMode] = React.useState<'time-attack' | 'budget'>('time-attack');
+
+  const sessionTeams = session
+    ? Object.values(teams).filter((t) => t.sessionId === session.id)
+    : [];
+
+  const handleCreate = () => {
+    createSession({
+      numTeams,
+      acquisitionTime: acqTime,
+      analysisTime: analysisTime,
+      gameMode: mode
+    });
+  };
+
+  if (!session) {
+    return (
+      <div className="card">
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="text-xl font-semibold">GM Session Setup</h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <label className="text-sm">
+            Number of teams
+            <input
+              type="number"
+              min={2}
+              max={8}
+              value={numTeams}
+              onChange={(e) => setNumTeams(Number(e.target.value))}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            Acquisition time (min)
+            <input
+              type="number"
+              min={1}
+              value={acqTime}
+              onChange={(e) => setAcqTime(Number(e.target.value))}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            Analysis time (min)
+            <input
+              type="number"
+              min={1}
+              value={analysisTime}
+              onChange={(e) => setAnalysisTime(Number(e.target.value))}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            Game mode
+            <select
+              value={mode}
+              onChange={(e) => setMode(e.target.value as any)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            >
+              <option value="time-attack">Time Attack</option>
+              <option value="budget">Budget Mode</option>
+            </select>
+          </label>
+        </div>
+        <button
+          type="button"
+          onClick={handleCreate}
+          className="mt-4 w-full rounded-lg bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400"
+        >
+          Create Session
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Session {session.sessionCode}</h2>
+          <p className="text-xs text-slate-100/80">
+            GM code: <span className="font-mono">{session.gmCode}</span> • Mode:{' '}
+            <span className="capitalize">{session.settings.gameMode}</span>
+          </p>
+          <p className="mt-1 text-xs text-sky-100">
+            Current phase: <span className="font-semibold">{phaseLabel[session.currentPhase]}</span>
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => previousPhase(session.id)}
+            className="rounded-lg bg-slate-600 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-500"
+          >
+            Previous phase
+          </button>
+          <button
+            type="button"
+            onClick={() => advancePhase(session.id)}
+            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+          >
+            Advance phase
+          </button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3 className="mb-2 text-sm font-semibold">Teams</h3>
+        {sessionTeams.length === 0 && (
+          <p className="text-xs text-slate-300">Waiting for teams to join using the session code.</p>
+        )}
+        <div className="grid gap-3 md:grid-cols-2">
+          {sessionTeams.map((team) => {
+            const experiment = experiments.find((e) => e.id === team.experiment.number);
+            return (
+              <div key={team.id} className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h4 className="text-sm font-semibold">{team.name}</h4>
+                    <p className="text-[11px] text-slate-300">
+                      Experiment {team.experiment.number} • {team.experiment.isLive ? 'LIVE' : 'FIXED'}
+                    </p>
+                  </div>
+                  <span className="pill bg-slate-800 text-xs">
+                    Time: {team.totalTimeCost} <span className="ml-1">⏰</span>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 text-[11px]">
+                  <label className="flex flex-col gap-1">
+                    <span className="text-slate-200">Experiment</span>
+                    <select
+                      value={team.experiment.number}
+                      onChange={(e) =>
+                        setTeamExperiment(team.id, Number(e.target.value) as 1 | 2 | 3 | 4 | 5 | 6, team.experiment.isLive)
+                      }
+                      className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px]"
+                    >
+                      {experiments.map((exp) => (
+                        <option key={exp.id} value={exp.id}>
+                          {exp.id} – {exp.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label className="ml-3 inline-flex items-center gap-1">
+                    <input
+                      type="checkbox"
+                      checked={team.experiment.isLive}
+                      onChange={(e) =>
+                        setTeamExperiment(team.id, team.experiment.number, e.target.checked)
+                      }
+                      className="h-3 w-3 rounded border-slate-600 bg-slate-900"
+                    />
+                    <span className="text-slate-200">LIVE experiment</span>
+                    {team.experiment.isLive && (
+                      <img
+                        src="/cards/live-experiment.png"
+                        alt="Live experiment card"
+                        className="ml-1 h-8 w-8 rounded border border-slate-700 bg-slate-950/60 object-contain"
+                      />
+                    )}
+                  </label>
+                </div>
+              <div className="mt-2 grid gap-2 text-[11px] md:grid-cols-2">
+                <div>
+                  <p className="mb-1 font-semibold text-slate-200">Acquisition</p>
+                  <ul className="space-y-1">
+                    {team.selectedCards.acquisition.map((c) => (
+                      <li key={c.id} className="flex items-center justify-between">
+                        <span>{c.name}</span>
+                        <ClockIcons count={c.timeCost} />
+                      </li>
+                    ))}
+                    {team.selectedCards.acquisition.length === 0 && (
+                      <li className="text-slate-500">No cards yet</li>
+                    )}
+                  </ul>
+                </div>
+                <div>
+                  <p className="mb-1 font-semibold text-slate-200">Analysis</p>
+                  <ul className="space-y-1">
+                    {team.selectedCards.analysis.map((c) => (
+                      <li key={c.id} className="flex items-center justify-between">
+                        <span>{c.name}</span>
+                        <ClockIcons count={c.timeCost} />
+                      </li>
+                    ))}
+                    {team.selectedCards.analysis.length === 0 && (
+                      <li className="text-slate-500">No cards yet</li>
+                    )}
+                  </ul>
+                </div>
+              </div>
+              {session.currentPhase === 'review' && (
+                <div className="mt-3 space-y-3 border-t border-slate-700 pt-3">
+                  <div>
+                    <p className="mb-1 text-[11px] font-semibold text-slate-200">Reviewer&apos;s concerns (issue cards)</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {reviewIssueCards.map((card) => {
+                        const assigned = (team.reviewOutcome.assignedConcerns || []).some((c) => c.id === card.id);
+                        return (
+                          <button
+                            key={card.id}
+                            type="button"
+                            onClick={() => (assigned ? unassignReviewerConcern(team.id, card.id) : assignReviewerConcern(team.id, card))}
+                            title={card.name}
+                            className={`flex flex-col items-center rounded border p-0.5 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
+                          >
+                            <img src={card.iconPath} alt={card.name} className="h-20 w-20 md:h-24 md:w-24 object-contain" />
+                            <span className="mt-0.5 text-[10px]" title={`+${card.timeCost} clock(s)`}>
+                              {Array.from({ length: card.timeCost }).map((_, i) => (
+                                <span key={i}>⏰</span>
+                              ))}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[11px] font-semibold text-slate-200">Experimental details (details cards)</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {reviewDetailsCards.map((card) => {
+                        const assigned = (team.reviewOutcome.assignedDetails || []).some((c) => c.id === card.id);
+                        return (
+                          <button
+                            key={card.id}
+                            type="button"
+                            onClick={() => (assigned ? unassignReviewerDetail(team.id, card.id) : assignReviewerDetail(team.id, card))}
+                            title={card.name}
+                            className={`flex flex-col items-center rounded border p-0.5 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
+                          >
+                            <img src={card.iconPath} alt={card.name} className="h-20 w-20 md:h-24 md:w-24 object-contain" />
+                            <span className="mt-0.5 text-[10px]" title={`+${card.timeCost} clock(s)`}>
+                              {Array.from({ length: card.timeCost }).map((_, i) => (
+                                <span key={i}>⏰</span>
+                              ))}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function TeamView() {
+  const { currentSessionId, sessions, currentTeamId, joinSessionAsTeam, teams, selectCard, deselectCard } =
+    useGameStore();
+  const [sessionCodeInput, setSessionCodeInput] = React.useState('');
+  const [teamName, setTeamName] = React.useState('');
+  const [pi, setPi] = React.useState('');
+  const [tech, setTech] = React.useState('');
+  const [postdoc, setPostdoc] = React.useState('');
+  const [grad, setGrad] = React.useState('');
+  const [error, setError] = React.useState<string | null>(null);
+
+  const session = currentSessionId ? sessions[currentSessionId] : null;
+  const team = currentTeamId ? teams[currentTeamId] : null;
+
+  const handleJoin = () => {
+    setError(null);
+    const joined = joinSessionAsTeam(sessionCodeInput.trim().toUpperCase(), teamName, {
+      pi,
+      microscopeTech: tech,
+      postdoc,
+      gradStudent: grad
+    });
+    if (!joined) {
+      setError('Session not found. Check the code with your GM.');
+    }
+  };
+
+  const isPlanningPhase = session?.currentPhase === 'acquisition' || session?.currentPhase === 'analysis';
+
+  if (!team || !session) {
+    return (
+      <div className="card space-y-3">
+        <h2 className="text-xl font-semibold">Join a Session</h2>
+        <div className="grid gap-3 md:grid-cols-2">
+          <label className="text-sm">
+            Session code
+            <input
+              value={sessionCodeInput}
+              onChange={(e) => setSessionCodeInput(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm uppercase"
+            />
+          </label>
+          <label className="text-sm">
+            Team name
+            <input
+              value={teamName}
+              onChange={(e) => setTeamName(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            PI
+            <input
+              value={pi}
+              onChange={(e) => setPi(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            Microscope Tech
+            <input
+              value={tech}
+              onChange={(e) => setTech(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            Postdoc
+            <input
+              value={postdoc}
+              onChange={(e) => setPostdoc(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            Grad Student
+            <input
+              value={grad}
+              onChange={(e) => setGrad(e.target.value)}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+        </div>
+        {error && <p className="text-xs text-red-300">{error}</p>}
+        <button
+          type="button"
+          onClick={handleJoin}
+          className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+        >
+          Join
+        </button>
+      </div>
+    );
+  }
+
+  const experiment = experiments.find((e) => e.id === team.experiment.number)!;
+
+  const handleToggleCard = (phase: 'acquisition' | 'analysis', card: Card) => {
+    if (!isPlanningPhase) return;
+    const selected = team.selectedCards[phase].some((c) => c.id === card.id);
+    if (selected) {
+      deselectCard(team.id, phase, card.id);
+    } else {
+      selectCard(team.id, phase, card);
+    }
+  };
+
+  const acquisitionCards = availableCards.filter((c) => c.category === 'microscopy');
+  const analysisCards = availableCards.filter((c) => c.category === 'analysis');
+  const showAnalysisCards = session.currentPhase === 'analysis';
+  const isReviewPhase = session.currentPhase === 'review';
+
+  return (
+    <div className="space-y-4">
+      <div className="card flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">{team.name}</h2>
+          <p className="text-xs text-slate-200">
+            Session {session.sessionCode} • Phase: {phaseLabel[session.currentPhase]}
+          </p>
+          <p className="mt-1 text-xs text-sky-100">
+            Total time:{' '}
+            <span className="font-semibold">
+              {team.totalTimeCost} <span className="ml-1">⏰</span>
+            </span>
+          </p>
+        </div>
+        <div className="text-xs text-right text-slate-300">
+          <p>PI: {team.members.pi || '—'}</p>
+          <p>Microscope Tech: {team.members.microscopeTech || '—'}</p>
+        </div>
+      </div>
+
+      <div className="card">
+        <div className="flex flex-col gap-3 md:flex-row md:items-start">
+          {experiment.iconPath && (
+            <img
+              src={experiment.iconPath}
+              alt={experiment.title}
+              className="w-full max-w-xl flex-none rounded-md border border-slate-800 bg-slate-950/60 object-contain md:w-1/2"
+            />
+          )}
+          <div className="flex-1">
+            <h3 className="text-base font-semibold">Assigned Experiment {experiment.id}</h3>
+            <p className="mt-1 text-base text-slate-100">{experiment.title}</p>
+            <p className="mt-1 text-sm text-slate-200">
+              Question: <span className="font-medium">{experiment.question}</span>
+            </p>
+            <p className="mt-1 text-sm text-slate-200">
+              Stainings:{' '}
+              <span className="font-mono text-xs">
+                {experiment.stainings.join(' • ')}
+              </span>
+            </p>
+          </div>
+          <div className="flex flex-col items-center gap-2 md:min-w-[10rem]">
+            <span
+              className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
+                team.experiment.isLive ? 'bg-emerald-500/20 text-emerald-200' : 'bg-sky-500/20 text-sky-200'
+              }`}
+            >
+              {team.experiment.isLive ? 'LIVE' : 'FIXED'}
+            </span>
+            {team.experiment.isLive && (
+              <img
+                src="/cards/live-experiment.png"
+                alt="Live experiment"
+                className="h-40 w-40 md:h-48 md:w-48 rounded-md border border-slate-700 bg-slate-950/60 object-contain"
+              />
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2">
+        <section className="card">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Acquisition Planning</h3>
+            <span className="pill text-[11px]">
+              {team.selectedCards.acquisition.length} selected
+            </span>
+          </div>
+          {!isPlanningPhase && (
+            <p className="mb-2 text-[11px] text-slate-400">
+              Waiting for GM phase change; selections are read-only.
+            </p>
+          )}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {acquisitionCards.map((card) => (
+              <CardPill
+                key={card.id}
+                card={card}
+                selected={team.selectedCards.acquisition.some((c) => c.id === card.id)}
+                onClick={() => handleToggleCard('acquisition', card)}
+              />
+            ))}
+          </div>
+        </section>
+
+        {showAnalysisCards && (
+          <section className="card">
+            <div className="mb-2 flex items-center justify-between">
+              <h3 className="text-sm font-semibold">Analysis Planning</h3>
+              <span className="pill text-[11px]">
+                {team.selectedCards.analysis.length} selected
+              </span>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {analysisCards.map((card) => (
+                <CardPill
+                  key={card.id}
+                  card={card}
+                  selected={team.selectedCards.analysis.some((c) => c.id === card.id)}
+                  onClick={() => handleToggleCard('analysis', card)}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        {isReviewPhase && (
+          <div className="card space-y-4">
+            <h3 className="text-sm font-semibold">Review &amp; Defense</h3>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <h4 className="mb-2 text-xs font-semibold text-slate-200">Reviewer&apos;s concerns</h4>
+                {(team.reviewOutcome?.assignedConcerns || []).length === 0 ? (
+                  <p className="text-xs text-slate-500">No concerns assigned yet.</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {(team.reviewOutcome?.assignedConcerns || []).map((c) => (
+                      <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
+                        <img src={c.iconPath} alt={c.name} className="h-40 w-40 md:h-48 md:w-48 object-contain" />
+                        <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
+                          {Array.from({ length: c.timeCost }).map((_, i) => (
+                            <span key={i}>⏰</span>
+                          ))}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col gap-2">
+                <h4 className="text-xs font-semibold text-slate-200">Experimental details</h4>
+                <div className="flex flex-wrap items-start gap-2">
+                  {(team.reviewOutcome?.assignedDetails || []).length === 0 ? (
+                    <p className="text-xs text-slate-500">No details assigned yet.</p>
+                  ) : (
+                    (team.reviewOutcome?.assignedDetails || []).map((c) => (
+                      <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
+                        <img src={c.iconPath} alt={c.name} className="h-40 w-40 md:h-48 md:w-48 object-contain" />
+                        <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
+                          {Array.from({ length: c.timeCost }).map((_, i) => (
+                            <span key={i}>⏰</span>
+                          ))}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+                {(team.reviewOutcome?.assignedDetails || []).length > 0 && <DiceRoller />}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function DiceRoller() {
+  const [roll, setRoll] = React.useState<number | null>(null);
+  const rollDice = () => setRoll(Math.floor(Math.random() * 6) + 1);
+  const success = roll !== null && roll >= 4;
+  return (
+    <div className="mt-2 rounded-lg border border-slate-700 bg-slate-800/50 p-3">
+      <p className="text-xs font-semibold text-slate-200">Dice roll for Experimental details</p>
+      <p className="mt-1 text-[11px] text-slate-400">Roll 4–6 to use a details card.</p>
+      <div className="mt-2 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={rollDice}
+          className="rounded bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-500"
+        >
+          Roll 1d6
+        </button>
+        {roll !== null && (
+          <span className={`text-lg font-bold ${success ? 'text-emerald-400' : 'text-red-400'}`}>
+            {roll} {success ? '✓ Can use' : '✗ Cannot use'}
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}
+
