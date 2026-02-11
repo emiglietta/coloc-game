@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { Socket } from 'socket.io-client';
 import { Session, Team, Card, SessionStatus } from './models';
 import { cards as allCards, experiments, reviewIssueCards, reviewDetailsCards } from './data';
 
@@ -8,7 +9,9 @@ export interface GameState {
   currentSessionId: string | null;
   role: 'gm' | 'team' | null;
   currentTeamId: string | null;
+  socket: Socket | null;
 
+  setSocket(socket: Socket | null): void;
   createSession(settings: Session['settings']): Session;
   joinSessionAsTeam(sessionCode: string, name: string, members: Team['members']): Team | null;
   setTeamExperiment(
@@ -69,12 +72,21 @@ export const useGameStore = create<GameState>((set, get) => ({
   currentSessionId: null,
   role: null,
   currentTeamId: null,
+  socket: null,
 
   setRole: (role) => set({ role }),
   setCurrentSession: (currentSessionId) => set({ currentSessionId }),
   setCurrentTeam: (currentTeamId) => set({ currentTeamId }),
+  setSocket: (socket) => set({ socket }),
 
   createSession: (settings) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'createSession', payload: { settings } }, (ack: { sessionId?: string }) => {
+        if (ack?.sessionId) set({ currentSessionId: ack.sessionId, role: 'gm' });
+      });
+      return null!;
+    }
     const id = genId();
     const now = Date.now();
     const sessionCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -100,7 +112,17 @@ export const useGameStore = create<GameState>((set, get) => ({
   },
 
   joinSessionAsTeam: (sessionCode, name, members) => {
-    const { sessions } = get();
+    const { socket, sessions } = get();
+    if (socket?.connected) {
+      socket.emit(
+        'action',
+        { type: 'joinSessionAsTeam', payload: { sessionCode, name, members } },
+        (ack: { teamId?: string; sessionId?: string }) => {
+          if (ack?.teamId) set({ currentTeamId: ack.teamId, currentSessionId: ack.sessionId ?? null, role: 'team' });
+        }
+      );
+      return null;
+    }
     const session = Object.values(sessions).find((s) => s.sessionCode === sessionCode);
     if (!session) return null;
     const id = genId();
@@ -137,7 +159,12 @@ export const useGameStore = create<GameState>((set, get) => ({
     return team;
   },
 
-  setTeamExperiment: (teamId, experimentNumber, isLive, lastRoll) =>
+  setTeamExperiment: (teamId, experimentNumber, isLive, lastRoll) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'setTeamExperiment', payload: { teamId, experimentNumber, isLive, lastRoll } });
+      return;
+    }
     set((state) => {
       const team = state.teams[teamId];
       if (!team) return state;
@@ -152,9 +179,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       return {
         teams: { ...state.teams, [teamId]: updated }
       };
-    }),
+    });
+  },
 
-  advancePhase: (sessionId) =>
+  advancePhase: (sessionId) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'advancePhase', payload: { sessionId } });
+      return;
+    }
     set((state) => {
       const session = state.sessions[sessionId];
       if (!session) return state;
@@ -174,9 +207,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       return {
         sessions: { ...state.sessions, [sessionId]: updated }
       };
-    }),
+    });
+  },
 
-  adjustPhaseTimer: (sessionId, deltaMinutes) =>
+  adjustPhaseTimer: (sessionId, deltaMinutes) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'adjustPhaseTimer', payload: { sessionId, deltaMinutes } });
+      return;
+    }
     set((state) => {
       const session = state.sessions[sessionId];
       if (!session || session.phaseEndTime == null) return state;
@@ -188,9 +227,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       return {
         sessions: { ...state.sessions, [sessionId]: updated }
       };
-    }),
+    });
+  },
 
-  setShowTimerToParticipants: (sessionId, show) =>
+  setShowTimerToParticipants: (sessionId, show) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'setShowTimerToParticipants', payload: { sessionId, show } });
+      return;
+    }
     set((state) => {
       const session = state.sessions[sessionId];
       if (!session) return state;
@@ -198,9 +243,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       return {
         sessions: { ...state.sessions, [sessionId]: updated }
       };
-    }),
+    });
+  },
 
-  previousPhase: (sessionId) =>
+  previousPhase: (sessionId) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'previousPhase', payload: { sessionId } });
+      return;
+    }
     set((state) => {
       const session = state.sessions[sessionId];
       if (!session) return state;
@@ -218,9 +269,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       return {
         sessions: { ...state.sessions, [sessionId]: updated }
       };
-    }),
+    });
+  },
 
-  selectCard: (teamId, phase, card) =>
+  selectCard: (teamId, phase, card) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'selectCard', payload: { teamId, phase, card } });
+      return;
+    }
     set((state) => {
       const team = state.teams[teamId];
       if (!team) return state;
@@ -260,9 +317,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       return {
         teams: { ...state.teams, [teamId]: updatedTeam }
       };
-    }),
+    });
+  },
 
-  deselectCard: (teamId, phase, cardId) =>
+  deselectCard: (teamId, phase, cardId) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'deselectCard', payload: { teamId, phase, cardId } });
+      return;
+    }
     set((state) => {
       const team = state.teams[teamId];
       if (!team) return state;
@@ -277,9 +340,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       return {
         teams: { ...state.teams, [teamId]: updatedTeam }
       };
-    }),
+    });
+  },
 
-  assignReviewerConcern: (teamId, card) =>
+  assignReviewerConcern: (teamId, card) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'assignReviewerConcern', payload: { teamId, card } });
+      return;
+    }
     set((state) => {
       const team = state.teams[teamId];
       if (!team) return state;
@@ -294,9 +363,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       };
       updated.totalTimeCost = calcTimeCost(updated);
       return { teams: { ...state.teams, [teamId]: updated } };
-    }),
+    });
+  },
 
-  unassignReviewerConcern: (teamId, cardId) =>
+  unassignReviewerConcern: (teamId, cardId) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'unassignReviewerConcern', payload: { teamId, cardId } });
+      return;
+    }
     set((state) => {
       const team = state.teams[teamId];
       if (!team) return state;
@@ -307,9 +382,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       };
       updated.totalTimeCost = calcTimeCost(updated);
       return { teams: { ...state.teams, [teamId]: updated } };
-    }),
+    });
+  },
 
-  assignReviewerDetail: (teamId, card) =>
+  assignReviewerDetail: (teamId, card) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'assignReviewerDetail', payload: { teamId, card } });
+      return;
+    }
     set((state) => {
       const team = state.teams[teamId];
       if (!team) return state;
@@ -324,9 +405,15 @@ export const useGameStore = create<GameState>((set, get) => ({
       };
       updated.totalTimeCost = calcTimeCost(updated);
       return { teams: { ...state.teams, [teamId]: updated } };
-    }),
+    });
+  },
 
-  unassignReviewerDetail: (teamId, cardId) =>
+  unassignReviewerDetail: (teamId, cardId) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'unassignReviewerDetail', payload: { teamId, cardId } });
+      return;
+    }
     set((state) => {
       const team = state.teams[teamId];
       if (!team) return state;
@@ -337,7 +424,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       };
       updated.totalTimeCost = calcTimeCost(updated);
       return { teams: { ...state.teams, [teamId]: updated } };
-    })
+    });
+  }
 }));
 
 export const availableCards = allCards;

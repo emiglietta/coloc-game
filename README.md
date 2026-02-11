@@ -27,6 +27,54 @@ A collaborative web app for playing the **coLoc** board game—teaching co-local
 
 No build step or backend is required for local play. All assets (logo, card images, experiment images) live inside the project under `public/`.
 
+## How to run the backend and play remotely
+
+To have the **Game Master** on one device and **teams** on other devices (e.g. different computers or phones), everyone must use the same game server. Follow these steps.
+
+### Step 1: Start the backend server
+
+In a terminal, from the **project root**:
+
+```bash
+cd server
+npm install
+npm start
+```
+
+You should see: `coloc-game server on http://localhost:3001`. Leave this terminal open; the server must keep running while you play.
+
+- Default port is **3001**. To use another port: `PORT=3002 npm start` (from inside `server/`).
+
+### Step 2: Point the frontend at the server
+
+In the **project root** (the folder that contains `src/` and `package.json`), create a file named `.env` with:
+
+```
+VITE_SOCKET_URL=http://localhost:3001
+```
+
+- If you changed the server port in Step 1, use that port in the URL.
+- For **remote** play (server and players on different machines), use the server’s real URL instead of `localhost` (e.g. `https://your-server.railway.app`). See [Deploying so others can join remotely](#deploying-so-others-can-join-remotely) for hosting the server.
+
+### Step 3: Start the frontend
+
+In a **new** terminal, from the **project root**:
+
+```bash
+npm install
+npm run dev
+```
+
+Open the URL shown (e.g. `http://localhost:5173`) in your browser. In the app header you should see **Online** (green) when the frontend is connected to the backend.
+
+### Step 4: Play remotely
+
+1. **Game Master:** On the device running the app, choose **Game Master**, create a session (set times and click Create). Share the **session code** (e.g. `ABC123`) with the teams.
+2. **Teams:** On **other** devices (or other browsers), open the **same** app URL (everyone must use a frontend that has `VITE_SOCKET_URL` set to the **same** server). Choose **Team**, enter the session code and team details, then click Join.
+3. State (phases, experiments, cards, etc.) stays in sync for everyone. GM advances phases; teams see updates and pick cards in real time.
+
+**Summary:** Backend running → `.env` with `VITE_SOCKET_URL` → frontend running → GM creates session and shares code → teams join from other devices with that code.
+
 ## Sending the project to someone else
 
 - **Option A – Full folder (easiest)**  
@@ -52,13 +100,48 @@ Everything needed to run the app is inside this repo: no external file paths or 
 | `npm run build`| Production build to `dist/` |
 | `npm run preview` | Preview production build |
 
+**Backend (remote play):** From the `server/` folder: `npm install` then `npm start` (listens on port 3001). Set `VITE_SOCKET_URL` in the frontend to the server URL so the app syncs state across devices.
+
 ## Stack
 
 - React 18 + Vite + TypeScript
-- Zustand (in-memory state)
+- Zustand (state; syncs with server when `VITE_SOCKET_URL` is set)
+- Socket.io (client + server for remote play)
 - TailwindCSS
 
-Game state is in-memory only; multiple browser tabs/windows share state only if they use the same tab (e.g. GM and team in different tabs on one machine). For real multi-device play you’d add a backend (e.g. Firebase, Socket.io).
+Game state is in-memory by default; multiple browser tabs share state only on the same machine. For multi-device play, use the [backend and remote-play steps](#how-to-run-the-backend-and-play-remotely) above.
+
+## Deploying so others can join remotely
+
+You can put the app on the internet so everyone uses the same URL. There are two parts: **hosting the app** and **sharing game state across devices**.
+
+### 1. Host the app online (same URL for everyone)
+
+Build the app and deploy the output to a free static host. Then you can share one link (e.g. `https://your-app.vercel.app`) with all participants.
+
+**Build once:**
+```bash
+npm run build
+```
+This creates a `dist/` folder with the production app.
+
+**Deploy to a host** (pick one):
+
+| Host | Best for | How |
+|------|----------|-----|
+| **Vercel** | Easiest, great with GitHub | Sign up at [vercel.com](https://vercel.com), import your GitHub repo, deploy. Or install Vercel CLI and run `npx vercel` in the project folder. |
+| **Netlify** | Simple, drag-and-drop or Git | Sign up at [netlify.com](https://netlify.com), connect the repo or drag the `dist/` folder into the Netlify dashboard. Set build command: `npm run build`, publish directory: `dist`. |
+| **GitHub Pages** | Free, good if repo is on GitHub | After `npm run build`, push the contents of `dist/` to a `gh-pages` branch or use the `gh-pages` npm package. See [Vite docs: GitHub Pages](https://vitejs.dev/guide/static-deploy.html#github-pages). |
+
+After deployment, everyone can open the same URL. If you do **not** run the backend (below), see the limitation in the next section.
+
+### 2. Backend and remote play (included server)
+
+The repo includes a **Node.js + Socket.io server** so GM and teams on different devices share the same game state. For **step-by-step instructions** to run the backend and play remotely, see [How to run the backend and play remotely](#how-to-run-the-backend-and-play-remotely) above.
+
+**Deploying the server for internet play:** Host the `server/` app on a Node-friendly host (e.g. [Railway](https://railway.app), [Render](https://render.com), [Fly.io](https://fly.io)). Set the `PORT` env var if required. Then set `VITE_SOCKET_URL` in your **frontend** build to the server’s public URL (e.g. `https://coloc-game.railway.app`). Deploy the frontend (Vercel, Netlify, etc.) with that env var set so all players connect to the same backend.
+
+**Without the backend:** If you don’t set `VITE_SOCKET_URL`, the app runs in **local-only** mode: state stays in the browser. GM and team can share one session only by using different tabs on the **same** computer.
 
 ## Publish to GitHub
 
