@@ -135,6 +135,7 @@ export function GMDashboard() {
   const session = currentSessionId ? sessions[currentSessionId] : null;
 
   const [numTeams, setNumTeams] = React.useState(4);
+  const [teamFormationTime, setTeamFormationTime] = React.useState(4);
   const [acqTime, setAcqTime] = React.useState(10);
   const [analysisTime, setAnalysisTime] = React.useState(10);
   const [mode, setMode] = React.useState<'time-attack' | 'budget'>('time-attack');
@@ -146,6 +147,7 @@ export function GMDashboard() {
   const handleCreate = () => {
     createSession({
       numTeams,
+      teamFormationTime,
       acquisitionTime: acqTime,
       analysisTime: analysisTime,
       gameMode: mode
@@ -167,6 +169,16 @@ export function GMDashboard() {
               max={8}
               value={numTeams}
               onChange={(e) => setNumTeams(Number(e.target.value))}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            Team formation time (min)
+            <input
+              type="number"
+              min={1}
+              value={teamFormationTime}
+              onChange={(e) => setTeamFormationTime(Number(e.target.value))}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
             />
           </label>
@@ -293,7 +305,9 @@ export function GMDashboard() {
                   <div>
                     <h4 className="text-sm font-semibold">{team.name}</h4>
                     <p className="text-[11px] text-slate-300">
-                      Experiment {team.experiment.number} • {team.experiment.isLive ? 'LIVE' : 'FIXED'}
+                      {team.experiment.number === 0
+                        ? 'No experiment assigned'
+                        : `Experiment ${team.experiment.number} • ${team.experiment.isLive ? 'LIVE' : 'FIXED'}`}
                     </p>
                   </div>
                   <span className="pill bg-slate-800 text-xs">
@@ -306,10 +320,11 @@ export function GMDashboard() {
                     <select
                       value={team.experiment.number}
                       onChange={(e) =>
-                        setTeamExperiment(team.id, Number(e.target.value) as 1 | 2 | 3 | 4 | 5 | 6, team.experiment.isLive)
+                        setTeamExperiment(team.id, Number(e.target.value) as 0 | 1 | 2 | 3 | 4 | 5 | 6, team.experiment.isLive)
                       }
                       className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-[11px]"
                     >
+                      <option value={0}>Choose experiment</option>
                       {experiments.map((exp) => (
                         <option key={exp.id} value={exp.id}>
                           {exp.id} – {exp.title}
@@ -428,7 +443,7 @@ export function GMDashboard() {
 }
 
 export function TeamView() {
-  const { currentSessionId, sessions, currentTeamId, joinSessionAsTeam, teams, selectCard, deselectCard } =
+  const { currentSessionId, sessions, currentTeamId, joinSessionAsTeam, teams, selectCard, deselectCard, setTeamExperiment } =
     useGameStore();
   const [sessionCodeInput, setSessionCodeInput] = React.useState('');
   const [teamName, setTeamName] = React.useState('');
@@ -522,8 +537,6 @@ export function TeamView() {
     );
   }
 
-  const experiment = experiments.find((e) => e.id === team.experiment.number)!;
-
   const handleToggleCard = (phase: 'acquisition' | 'analysis', card: Card) => {
     if (!isPlanningPhase) return;
     const selected = team.selectedCards[phase].some((c) => c.id === card.id);
@@ -536,8 +549,18 @@ export function TeamView() {
 
   const acquisitionCards = availableCards.filter((c) => c.category === 'microscopy');
   const analysisCards = availableCards.filter((c) => c.category === 'analysis');
+  const showAcquisitionCards = session.currentPhase === 'acquisition' || session.currentPhase === 'analysis';
   const showAnalysisCards = session.currentPhase === 'analysis';
   const isReviewPhase = session.currentPhase === 'review';
+  const hasAssignedExperiment = team.experiment.number >= 1;
+  const experiment = hasAssignedExperiment ? experiments.find((e) => e.id === team.experiment.number) : null;
+
+  const handleExperimentAssign = React.useCallback(
+    (expNum: 1 | 2 | 3 | 4 | 5 | 6, isLive: boolean, d1: number, d2: number) => {
+      setTeamExperiment(team.id, expNum, isLive, { d1, d2 });
+    },
+    [team.id, setTeamExperiment]
+  );
 
   return (
     <div className="space-y-4">
@@ -559,51 +582,75 @@ export function TeamView() {
           <div className="text-right">
             <p>PI: {team.members.pi || '—'}</p>
             <p>Microscope Tech: {team.members.microscopeTech || '—'}</p>
+            <p>Postdoc: {team.members.postdoc || '—'}</p>
+            <p>Grad Student: {team.members.gradStudent || '—'}</p>
           </div>
         </div>
       </div>
 
-      <div className="card">
-        <div className="flex flex-col gap-3 md:flex-row md:items-start">
-          {experiment.iconPath && (
-            <img
-              src={experiment.iconPath}
-              alt={experiment.title}
-              className="w-full max-w-xl flex-none rounded-md border border-slate-800 bg-slate-950/60 object-contain md:w-1/2"
-            />
-          )}
-          <div className="flex-1">
-            <h3 className="text-base font-semibold">Assigned Experiment {experiment.id}</h3>
-            <p className="mt-1 text-base text-slate-100">{experiment.title}</p>
-            <p className="mt-1 text-sm text-slate-200">
-              Question: <span className="font-medium">{experiment.question}</span>
-            </p>
-            <p className="mt-1 text-sm text-slate-200">
-              Stainings:{' '}
-              <span className="font-mono text-xs">
-                {experiment.stainings.join(' • ')}
+      {session.currentPhase === 'team-formation' && (
+        <div className="card">
+          <ExperimentDiceRoller
+            alreadyAssigned={hasAssignedExperiment}
+            onAssign={handleExperimentAssign}
+          />
+        </div>
+      )}
+
+      {hasAssignedExperiment && experiment && (
+        <div className="card">
+          {team.experiment.lastRoll && (
+            <div className="mb-3 rounded-md border border-slate-600 bg-slate-800/40 px-3 py-2 text-sm text-slate-200">
+              <span className="font-semibold text-slate-300">Dice result: </span>
+              <span>{team.experiment.lastRoll.d1} → Experiment {team.experiment.number}</span>
+              <span className="mx-2 text-slate-500">|</span>
+              <span>
+                {team.experiment.lastRoll.d2} → {team.experiment.lastRoll.d2 % 2 === 1 ? 'LIVE (odd)' : 'FIXED (even)'}
               </span>
-            </p>
-          </div>
-          <div className="flex flex-col items-center gap-2 md:min-w-[10rem]">
-            <span
-              className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
-                team.experiment.isLive ? 'bg-emerald-500/20 text-emerald-200' : 'bg-sky-500/20 text-sky-200'
-              }`}
-            >
-              {team.experiment.isLive ? 'LIVE' : 'FIXED'}
-            </span>
-            {team.experiment.isLive && (
+            </div>
+          )}
+          <div className="flex flex-col gap-3 md:flex-row md:items-start">
+            {experiment.iconPath && (
               <img
-                src="/cards/live-experiment.png"
-                alt="Live experiment"
-                className="h-40 w-40 md:h-48 md:w-48 rounded-md border border-slate-700 bg-slate-950/60 object-contain"
+                src={experiment.iconPath}
+                alt={experiment.title}
+                className="w-full max-w-xl flex-none rounded-md border border-slate-800 bg-slate-950/60 object-contain md:w-1/2"
               />
             )}
+            <div className="flex-1">
+              <h3 className="text-base font-semibold">Assigned Experiment {experiment.id}</h3>
+              <p className="mt-1 text-base text-slate-100">{experiment.title}</p>
+              <p className="mt-1 text-sm text-slate-200">
+                Question: <span className="font-medium">{experiment.question}</span>
+              </p>
+              <p className="mt-1 text-sm text-slate-200">
+                Stainings:{' '}
+                <span className="font-mono text-xs">
+                  {experiment.stainings.join(' • ')}
+                </span>
+              </p>
+            </div>
+            <div className="flex flex-col items-center gap-2 md:min-w-[10rem]">
+              <span
+                className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
+                  team.experiment.isLive ? 'bg-emerald-500/20 text-emerald-200' : 'bg-sky-500/20 text-sky-200'
+                }`}
+              >
+                {team.experiment.isLive ? 'LIVE' : 'FIXED'}
+              </span>
+              {team.experiment.isLive && (
+                <img
+                  src="/cards/live-experiment.png"
+                  alt="Live experiment"
+                  className="h-40 w-40 md:h-48 md:w-48 rounded-md border border-slate-700 bg-slate-950/60 object-contain"
+                />
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
 
+      {showAcquisitionCards && (
       <div className="grid gap-4 md:grid-cols-2">
         <section className="card">
           <div className="mb-2 flex items-center justify-between">
@@ -649,8 +696,10 @@ export function TeamView() {
             </div>
           </section>
         )}
+      </div>
+      )}
 
-        {isReviewPhase && (
+      {isReviewPhase && (
           <div className="card space-y-4">
             <h3 className="text-sm font-semibold">Review &amp; Defense</h3>
             <div className="grid gap-4 md:grid-cols-2">
@@ -696,27 +745,161 @@ export function TeamView() {
             </div>
           </div>
         )}
+    </div>
+  );
+}
+
+const DICE_ANIMATION_MS = 1800;
+const DICE_TICK_MS = 80;
+
+/** Single d6: display shows "-" until rolled, then animates and settles. Optional separate Roll button. */
+function AnimatedDice({
+  onComplete,
+  onRollStart,
+  label,
+  disabled,
+  triggerRoll
+}: {
+  onComplete?: (value: number) => void;
+  onRollStart?: () => void;
+  label?: string;
+  disabled?: boolean;
+  /** When this value changes, start a roll (used for "Roll both" from parent). */
+  triggerRoll?: number;
+}) {
+  const [rolling, setRolling] = React.useState(false);
+  const [displayValue, setDisplayValue] = React.useState<number | null>(null);
+  const finalRef = React.useRef<number>(1);
+  const prevTriggerRef = React.useRef(triggerRoll ?? 0);
+
+  const startRoll = React.useCallback((final: number) => {
+    finalRef.current = final;
+    onRollStart?.();
+    setRolling(true);
+  }, [onRollStart]);
+
+  React.useEffect(() => {
+    if (!rolling) return;
+    const final = finalRef.current;
+    const start = Date.now();
+    const id = setInterval(() => {
+      const elapsed = Date.now() - start;
+      if (elapsed >= DICE_ANIMATION_MS) {
+        setDisplayValue(final);
+        setRolling(false);
+        onComplete?.(final);
+        clearInterval(id);
+        return;
+      }
+      setDisplayValue(Math.floor(Math.random() * 6) + 1);
+    }, DICE_TICK_MS);
+    return () => clearInterval(id);
+  }, [rolling, onComplete]);
+
+  React.useEffect(() => {
+    if (triggerRoll !== undefined && triggerRoll !== prevTriggerRef.current) {
+      prevTriggerRef.current = triggerRoll;
+      startRoll(Math.floor(Math.random() * 6) + 1);
+    }
+  }, [triggerRoll, startRoll]);
+
+  const roll = () => {
+    if (disabled || rolling) return;
+    startRoll(Math.floor(Math.random() * 6) + 1);
+  };
+
+  const showRollButton = triggerRoll === undefined;
+
+  return (
+    <div className="flex flex-col items-center gap-1">
+      {label && <span className="text-[10px] text-slate-400">{label}</span>}
+      <div
+        className={`flex h-12 w-12 items-center justify-center rounded-lg border-2 border-slate-600 bg-slate-800 font-mono text-xl font-bold tabular-nums transition ${
+          rolling ? 'animate-pulse border-amber-500' : ''
+        }`}
+      >
+        {displayValue === null ? '–' : displayValue}
+      </div>
+      {showRollButton && (
+        <button
+          type="button"
+          onClick={roll}
+          disabled={disabled || rolling}
+          className="rounded bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-500 disabled:opacity-50"
+        >
+          Roll
+        </button>
+      )}
+    </div>
+  );
+}
+
+/** Two d6: first = experiment 1–6, second = odd live / even fixed. One button rolls both; animates then assigns. */
+function ExperimentDiceRoller({
+  onAssign,
+  alreadyAssigned
+}: {
+  onAssign: (experimentNumber: 1 | 2 | 3 | 4 | 5 | 6, isLive: boolean, d1: number, d2: number) => void;
+  alreadyAssigned?: boolean;
+}) {
+  const [trigger, setTrigger] = React.useState(0);
+  const [d1, setD1] = React.useState<number | null>(null);
+  const [d2, setD2] = React.useState<number | null>(null);
+  const onAssignRef = React.useRef(onAssign);
+  onAssignRef.current = onAssign;
+
+  React.useEffect(() => {
+    if (d1 !== null && d2 !== null) {
+      const n1 = d1;
+      const n2 = d2;
+      setD1(null);
+      setD2(null);
+      onAssignRef.current(n1 as 1 | 2 | 3 | 4 | 5 | 6, n2 % 2 === 1, n1, n2);
+    }
+  }, [d1, d2]);
+
+  const rollBoth = () => {
+    setD1(null);
+    setD2(null);
+    setTrigger((t) => t + 1);
+  };
+
+  return (
+    <div className="rounded-lg border border-slate-700 bg-slate-800/50 p-4">
+      <p className="mb-2 text-sm font-semibold text-slate-200">
+        {alreadyAssigned ? 'Roll again to change your experiment' : 'Roll for your experiment'}
+      </p>
+      <p className="mb-3 text-[11px] text-slate-400">
+        First die: experiment number (1–6). Second die: odd = LIVE, even = FIXED.
+      </p>
+      <div className="flex flex-wrap items-end gap-4">
+        <AnimatedDice label="Experiment (1–6)" triggerRoll={trigger} onComplete={(v) => setD1(v)} />
+        <AnimatedDice label="LIVE (odd) / FIXED (even)" triggerRoll={trigger} onComplete={(v) => setD2(v)} />
+        <button
+          type="button"
+          onClick={rollBoth}
+          className="rounded bg-amber-600 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-500"
+        >
+          {alreadyAssigned ? 'Roll both dice again' : 'Roll both dice'}
+        </button>
       </div>
     </div>
   );
 }
 
+/** Single d6 for Experimental details: 4–6 = can use. */
 function DiceRoller() {
   const [roll, setRoll] = React.useState<number | null>(null);
-  const rollDice = () => setRoll(Math.floor(Math.random() * 6) + 1);
   const success = roll !== null && roll >= 4;
   return (
     <div className="mt-2 rounded-lg border border-slate-700 bg-slate-800/50 p-3">
       <p className="text-xs font-semibold text-slate-200">Dice roll for Experimental details</p>
       <p className="mt-1 text-[11px] text-slate-400">Roll 4–6 to use a details card.</p>
       <div className="mt-2 flex items-center gap-2">
-        <button
-          type="button"
-          onClick={rollDice}
-          className="rounded bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-500"
-        >
-          Roll 1d6
-        </button>
+        <AnimatedDice
+          onRollStart={() => setRoll(null)}
+          onComplete={(value) => setRoll(value)}
+        />
         {roll !== null && (
           <span className={`text-lg font-bold ${success ? 'text-emerald-400' : 'text-red-400'}`}>
             {roll} {success ? '✓ Can use' : '✗ Cannot use'}

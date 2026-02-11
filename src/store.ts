@@ -11,7 +11,12 @@ export interface GameState {
 
   createSession(settings: Session['settings']): Session;
   joinSessionAsTeam(sessionCode: string, name: string, members: Team['members']): Team | null;
-  setTeamExperiment(teamId: string, experimentNumber: 1 | 2 | 3 | 4 | 5 | 6, isLive: boolean): void;
+  setTeamExperiment(
+    teamId: string,
+    experimentNumber: 0 | 1 | 2 | 3 | 4 | 5 | 6,
+    isLive: boolean,
+    lastRoll?: { d1: number; d2: number }
+  ): void;
   setRole(role: 'gm' | 'team'): void;
   setCurrentSession(sessionId: string | null): void;
   setCurrentTeam(teamId: string | null): void;
@@ -74,14 +79,15 @@ export const useGameStore = create<GameState>((set, get) => ({
     const now = Date.now();
     const sessionCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const gmCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+    const teamFormationMinutes = settings.teamFormationTime ?? 4;
     const session: Session = {
       id,
       gmCode,
       sessionCode,
       status: 'setup',
-      settings,
+      settings: { ...settings, teamFormationTime: teamFormationMinutes },
       currentPhase: 'team-formation',
-      phaseEndTime: null,
+      phaseEndTime: Date.now() + teamFormationMinutes * 60 * 1000,
       showTimerToParticipants: true,
       createdAt: now
     };
@@ -98,15 +104,13 @@ export const useGameStore = create<GameState>((set, get) => ({
     const session = Object.values(sessions).find((s) => s.sessionCode === sessionCode);
     if (!session) return null;
     const id = genId();
-    // Default experiment; GM can adjust manually in dashboard
-    const experimentDef = experiments[0];
     const team: Team = {
       id,
       sessionId: session.id,
       name,
       members,
       experiment: {
-        number: experimentDef.id,
+        number: 0,
         isLive: false
       },
       selectedCards: {
@@ -133,7 +137,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     return team;
   },
 
-  setTeamExperiment: (teamId, experimentNumber, isLive) =>
+  setTeamExperiment: (teamId, experimentNumber, isLive, lastRoll) =>
     set((state) => {
       const team = state.teams[teamId];
       if (!team) return state;
@@ -141,7 +145,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         ...team,
         experiment: {
           number: experimentNumber,
-          isLive
+          isLive,
+          lastRoll
         }
       };
       return {
@@ -201,11 +206,14 @@ export const useGameStore = create<GameState>((set, get) => ({
       if (!session) return state;
       const phase = prevPhase[session.currentPhase];
       if (phase === session.currentPhase) return state;
+      const teamFormationMinutes = session.settings.teamFormationTime ?? 4;
+      const phaseEndTime =
+        phase === 'team-formation' ? Date.now() + teamFormationMinutes * 60 * 1000 : null;
       const updated: Session = {
         ...session,
         currentPhase: phase,
         status: phase,
-        phaseEndTime: null
+        phaseEndTime
       };
       return {
         sessions: { ...state.sessions, [sessionId]: updated }

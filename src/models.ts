@@ -15,6 +15,7 @@ export interface Session {
   status: SessionStatus;
   settings: {
     numTeams: number;
+    teamFormationTime: number;
     acquisitionTime: number;
     analysisTime: number;
     gameMode: GameMode;
@@ -65,8 +66,11 @@ export interface Team {
   name: string;
   members: TeamMembers;
   experiment: {
-    number: 1 | 2 | 3 | 4 | 5 | 6;
+    /** 0 = not yet assigned (GM or dice); 1–6 = experiment id */
+    number: 0 | 1 | 2 | 3 | 4 | 5 | 6;
     isLive: boolean;
+    /** Last dice roll that assigned this experiment (d1 = experiment 1–6, d2 = odd LIVE / even FIXED). */
+    lastRoll?: { d1: number; d2: number };
   };
   selectedCards: {
     acquisition: Card[];
