@@ -21,6 +21,8 @@ export interface Session {
   };
   currentPhase: SessionStatus;
   phaseEndTime: number | null;
+  /** When true, participants see the phase countdown timer. */
+  showTimerToParticipants: boolean;
   createdAt: number;
 }
 

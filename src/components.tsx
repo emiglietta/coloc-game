@@ -12,6 +12,45 @@ const phaseLabel: Record<SessionStatus, string> = {
   complete: 'Complete'
 };
 
+/** Countdown from phaseEndTime; red when <= 2 minutes. Updates every second. */
+function PhaseTimer({ session }: { session: { phaseEndTime: number | null; currentPhase: SessionStatus } }) {
+  const [remainingSeconds, setRemainingSeconds] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    if (session.phaseEndTime == null) {
+      setRemainingSeconds(null);
+      return;
+    }
+    const tick = () => {
+      const sec = Math.max(0, Math.floor((session.phaseEndTime! - Date.now()) / 1000));
+      setRemainingSeconds(sec);
+    };
+    tick();
+    const id = setInterval(tick, 1000);
+    return () => clearInterval(id);
+  }, [session.phaseEndTime]);
+
+  if (remainingSeconds == null || session.phaseEndTime == null) return null;
+
+  const m = Math.floor(remainingSeconds / 60);
+  const s = remainingSeconds % 60;
+  const isLow = remainingSeconds <= 120; // 2 minutes
+
+  return (
+    <div
+      className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-xl tabular-nums ${
+        isLow ? 'border-red-500/80 bg-red-950/40 text-red-200' : 'border-slate-600 bg-slate-800/60 text-slate-100'
+      }`}
+      title="Phase time remaining"
+    >
+      <span aria-hidden>⏱</span>
+      <span>
+        {String(m).padStart(2, '0')}:{String(s).padStart(2, '0')}
+      </span>
+    </div>
+  );
+}
+
 const categoryColor: Record<Card['category'], string> = {
   microscopy: 'from-pink-500/80 to-sky-500/80',
   analysis: 'from-emerald-500/80 to-lime-500/80',
@@ -89,7 +128,9 @@ export function GMDashboard() {
     assignReviewerConcern,
     unassignReviewerConcern,
     assignReviewerDetail,
-    unassignReviewerDetail
+    unassignReviewerDetail,
+    adjustPhaseTimer,
+    setShowTimerToParticipants
   } = useGameStore();
   const session = currentSessionId ? sessions[currentSessionId] : null;
 
@@ -185,21 +226,56 @@ export function GMDashboard() {
             Current phase: <span className="font-semibold">{phaseLabel[session.currentPhase]}</span>
           </p>
         </div>
-        <div className="flex gap-2">
-          <button
-            type="button"
-            onClick={() => previousPhase(session.id)}
-            className="rounded-lg bg-slate-600 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-500"
-          >
-            Previous phase
-          </button>
-          <button
-            type="button"
-            onClick={() => advancePhase(session.id)}
-            className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
-          >
-            Advance phase
-          </button>
+        <div className="flex flex-col items-end gap-2 md:flex-row md:items-center">
+          <div className="flex flex-wrap items-center gap-3">
+            <PhaseTimer session={session} />
+            {session.phaseEndTime != null && (
+              <div className="flex items-center gap-1 rounded border border-slate-600 bg-slate-800/50 px-2 py-1">
+                <span className="text-[10px] text-slate-400">Timer:</span>
+                <button
+                  type="button"
+                  onClick={() => adjustPhaseTimer(session.id, -1)}
+                  className="rounded px-1.5 py-0.5 text-xs font-bold text-slate-200 hover:bg-slate-600"
+                  title="Subtract 1 minute"
+                >
+                  −1 min
+                </button>
+                <button
+                  type="button"
+                  onClick={() => adjustPhaseTimer(session.id, 1)}
+                  className="rounded px-1.5 py-0.5 text-xs font-bold text-slate-200 hover:bg-slate-600"
+                  title="Add 1 minute"
+                >
+                  +1 min
+                </button>
+              </div>
+            )}
+            <label className="flex items-center gap-2 text-xs text-slate-200">
+              <input
+                type="checkbox"
+                checked={session.showTimerToParticipants !== false}
+                onChange={(e) => setShowTimerToParticipants(session.id, e.target.checked)}
+                className="h-3 w-3 rounded border-slate-600 bg-slate-900"
+              />
+              Show timer to participants
+            </label>
+          </div>
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => previousPhase(session.id)}
+              className="rounded-lg bg-slate-600 px-4 py-2 text-sm font-semibold text-slate-100 hover:bg-slate-500"
+            >
+              Previous phase
+            </button>
+            <button
+              type="button"
+              onClick={() => advancePhase(session.id)}
+              className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+            >
+              Advance phase
+            </button>
+          </div>
         </div>
       </div>
 
@@ -478,9 +554,12 @@ export function TeamView() {
             </span>
           </p>
         </div>
-        <div className="text-xs text-right text-slate-300">
-          <p>PI: {team.members.pi || '—'}</p>
-          <p>Microscope Tech: {team.members.microscopeTech || '—'}</p>
+        <div className="flex flex-col items-end gap-2 text-xs text-slate-300 md:flex-row md:items-center">
+          {session.showTimerToParticipants !== false && <PhaseTimer session={session} />}
+          <div className="text-right">
+            <p>PI: {team.members.pi || '—'}</p>
+            <p>Microscope Tech: {team.members.microscopeTech || '—'}</p>
+          </div>
         </div>
       </div>
 

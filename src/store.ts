@@ -23,6 +23,8 @@ export interface GameState {
   unassignReviewerConcern(teamId: string, cardId: string): void;
   assignReviewerDetail(teamId: string, card: Card): void;
   unassignReviewerDetail(teamId: string, cardId: string): void;
+  adjustPhaseTimer(sessionId: string, deltaMinutes: number): void;
+  setShowTimerToParticipants(sessionId: string, show: boolean): void;
 }
 
 const genId = () => crypto.randomUUID();
@@ -80,6 +82,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       settings,
       currentPhase: 'team-formation',
       phaseEndTime: null,
+      showTimerToParticipants: true,
       createdAt: now
     };
     set((state) => ({
@@ -150,11 +153,43 @@ export const useGameStore = create<GameState>((set, get) => ({
     set((state) => {
       const session = state.sessions[sessionId];
       if (!session) return state;
+      const newPhase = nextPhase[session.currentPhase];
+      let phaseEndTime: number | null = null;
+      if (newPhase === 'acquisition') {
+        phaseEndTime = Date.now() + session.settings.acquisitionTime * 60 * 1000;
+      } else if (newPhase === 'analysis') {
+        phaseEndTime = Date.now() + session.settings.analysisTime * 60 * 1000;
+      }
       const updated: Session = {
         ...session,
-        currentPhase: nextPhase[session.currentPhase],
-        status: nextPhase[session.status]
+        currentPhase: newPhase,
+        status: newPhase,
+        phaseEndTime: phaseEndTime ?? session.phaseEndTime
       };
+      return {
+        sessions: { ...state.sessions, [sessionId]: updated }
+      };
+    }),
+
+  adjustPhaseTimer: (sessionId, deltaMinutes) =>
+    set((state) => {
+      const session = state.sessions[sessionId];
+      if (!session || session.phaseEndTime == null) return state;
+      const deltaMs = deltaMinutes * 60 * 1000;
+      const updated: Session = {
+        ...session,
+        phaseEndTime: Math.max(Date.now() + 60 * 1000, session.phaseEndTime + deltaMs)
+      };
+      return {
+        sessions: { ...state.sessions, [sessionId]: updated }
+      };
+    }),
+
+  setShowTimerToParticipants: (sessionId, show) =>
+    set((state) => {
+      const session = state.sessions[sessionId];
+      if (!session) return state;
+      const updated: Session = { ...session, showTimerToParticipants: show };
       return {
         sessions: { ...state.sessions, [sessionId]: updated }
       };
@@ -169,7 +204,8 @@ export const useGameStore = create<GameState>((set, get) => ({
       const updated: Session = {
         ...session,
         currentPhase: phase,
-        status: phase
+        status: phase,
+        phaseEndTime: null
       };
       return {
         sessions: { ...state.sessions, [sessionId]: updated }
