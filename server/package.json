@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch index.js"
+    "dev": "node --watch index.js",
+    "kill-port": "lsof -ti :3001 | xargs kill -9 2>/dev/null || true",
+    "dev:fresh": "npm run kill-port && node --watch index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

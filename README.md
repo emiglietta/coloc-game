@@ -1,8 +1,3 @@
-# Disclaimer
-This entire repo has been generated using Cursor AI.
-Local deployment of the app seems to work just fine.
-Instructions for backend creation have not been fully tested.
-
 # coLoc Game (Web)
 
 A collaborative web app for playing the **coLoc** board game—teaching co-localization analysis in microscopy. Game Master runs sessions; teams join with a code, get assigned experiments, and plan acquisition and analysis cards. Review phase uses issue and details cards with a dice roll for experimental details.
@@ -10,110 +5,207 @@ A collaborative web app for playing the **coLoc** board game—teaching co-local
 ## Requirements
 
 - **Node.js** 18 or newer (includes npm)
-- If you don’t have Node: install from [nodejs.org](https://nodejs.org/) (LTS) or with `brew install node` on macOS.
+- If you don't have Node: install from [nodejs.org](https://nodejs.org/) (LTS) or with `brew install node` on macOS.
 
-## Running the app (on your machine or after someone sends you the project)
+## Running locally
 
-1. **Open the project folder**  
-   Use the `coloc-game` folder (the one that contains `package.json` and `src/`).
-
-2. **Install dependencies** (first time only):
+1. **Install dependencies** (first time only):
    ```bash
    npm install
    ```
 
-3. **Start the dev server**:
+2. **Start the dev server**:
    ```bash
    npm run dev
    ```
 
-4. **Open in a browser**  
+3. **Open in a browser**  
    Use the URL printed in the terminal (e.g. `http://localhost:5173`).
 
 No build step or backend is required for local play. All assets (logo, card images, experiment images) live inside the project under `public/`.
 
-## Security note (npm audit)
+## Local play with remote participants (same network)
 
-If you run `npm audit`, you may see **moderate** vulnerabilities in the dev dependencies (esbuild / Vite). Please be aware:
+1. **Start the backend** (from project root):
+   ```bash
+   cd server
+   npm install
+   npm start
+   ```
+   Server runs on port 3001. Leave this terminal open.
 
-- **Production builds are not affected.** The issue applies only to the **development server** (`npm run dev`). The built app you deploy is static files and is not vulnerable.
-- **Dev server:** The reported issue could, in theory, allow a malicious website to send requests to your local dev server. For normal use (running the dev server on your own machine, trusted network), the practical risk is low. If you want to be cautious, avoid visiting untrusted websites in the same browser while the dev server is running.
-- **Do not run `npm audit fix --force`** to “fix” these. That would upgrade to a major new Vite version and may break the project. If you decide to address the warnings later, upgrade Vite (and related tools) following the [official Vite migration guide](https://vitejs.dev/guide/migration.html) and test the app and backend integration afterward.
+2. **Create `.env`** in the project root:
+   ```
+   VITE_SOCKET_URL=http://YOUR_LOCAL_IP:3001
+   ```
+   Replace `YOUR_LOCAL_IP` with your machine's IP (e.g. `192.168.1.5`).
 
-## How to run the backend and play remotely
+3. **Start the frontend** (new terminal, from project root):
+   ```bash
+   npm run dev
+   ```
 
-To have the **Game Master** on one device and **teams** on other devices (e.g. different computers or phones), everyone must use the same game server. Follow these steps.
+4. **Share the URL**  
+   Other players on the same network open `http://YOUR_LOCAL_IP:5173`, choose Team, enter the session code, and join.
 
-### Step 1: Start the backend server
+## Deploying for remote play (GitHub Pages + Node host)
 
-In a terminal, from the **project root**:
+To let anyone on the internet play together, deploy the **frontend** to GitHub Pages and the **backend** to a Node host.
 
-```bash
-cd server
-npm install
-npm start
-```
+---
 
-You should see: `coloc-game server on http://localhost:3001`. Leave this terminal open; the server must keep running while you play.
+### Part 1: Deploy the backend to a Node host
 
-- Default port is **3001**. To use another port: `PORT=3002 npm start` (from inside `server/`).
+The backend must run on a service that supports Node.js. Two straightforward options:
 
-### Step 2: Point the frontend at the server
+#### Option A: Railway
 
-In the **project root** (the folder that contains `src/` and `package.json`), create a file named `.env` with:
+1. Create an account at [railway.app](https://railway.app).
 
-```
-VITE_SOCKET_URL=http://localhost:3001
-```
+2. Click **New Project** → **Deploy from GitHub repo** (or upload the `server/` folder).
 
-- If you changed the server port in Step 1, use that port in the URL.
-- For **remote** play (server and players on different machines), use the server’s real URL instead of `localhost` (e.g. `https://your-server.railway.app`). See [Deploying so others can join remotely](#deploying-so-others-can-join-remotely) for hosting the server.
+3. If using GitHub: select the repo, then set the **root directory** to `server` (or only deploy the `server/` folder).
 
-### Step 3: Start the frontend
+4. Railway auto-detects Node. Ensure the start command is:
+   ```bash
+   node index.js
+   ```
+   (or `npm start` if your `package.json` has it).
 
-In a **new** terminal, from the **project root**:
+5. Click **Deploy**. When it finishes, open **Settings** → **Networking** → **Generate Domain**. Copy the URL (e.g. `https://coloc-game-production-xxxx.up.railway.app`).
 
-```bash
-npm install
-npm run dev
-```
+6. **Save this URL** — you'll use it as `VITE_SOCKET_URL` when building the frontend.
 
-Open the URL shown (e.g. `http://localhost:5173`) in your browser. In the app header you should see **Online** (green) when the frontend is connected to the backend.
+#### Option B: Render
 
-### Step 4: Play remotely
+1. Create an account at [render.com](https://render.com).
 
-1. **Game Master:** On the device running the app, choose **Game Master**, create a session (set times and click Create). Share the **session code** (e.g. `ABC123`) with the teams.
-2. **Teams:** On **other** devices (or other browsers), open the **same** app URL (everyone must use a frontend that has `VITE_SOCKET_URL` set to the **same** server). Choose **Team**, enter the session code and team details, then click Join.
-3. State (phases, experiments, cards, etc.) stays in sync for everyone. GM advances phases; teams see updates and pick cards in real time.
+2. Click **New** → **Web Service**.
 
-**Summary:** Backend running → `.env` with `VITE_SOCKET_URL` → frontend running → GM creates session and shares code → teams join from other devices with that code.
+3. Connect your GitHub repo (or upload the project). Set the **root directory** to `server`.
 
-## Sending the project to someone else
+4. Configure:
+   - **Build command:** `npm install`
+   - **Start command:** `npm start` or `node index.js`
 
-- **Option A – Full folder (easiest)**  
-  Zip or copy the entire `coloc-game` folder **including** the `public/` folder (logo and card/experiment images).  
-  Tell them to run `npm install` then `npm run dev` (see above).  
-  They can omit the `node_modules/` folder when sending; the other person will run `npm install` themselves.
+5. Click **Create Web Service**. Render will build and deploy.
 
-- **Option B – Without node_modules**  
-  Zip the project **without** the `node_modules/` folder (and without `dist/` if it exists).  
-  The recipient must have Node.js installed and run:
-  ```bash
-  npm install
-  npm run dev
-  ```
+6. Once deployed, copy the service URL (e.g. `https://coloc-game.onrender.com`).
 
-Everything needed to run the app is inside this repo: no external file paths or servers. The `public/` folder must be included so the coLoc logo and all card/experiment images load.
+7. **Save this URL** — you'll use it as `VITE_SOCKET_URL` when building the frontend.
+
+---
+
+### Part 2: Deploy the frontend to GitHub Pages
+
+1. **Push the project to GitHub**  
+   Create a repo and push the `coloc-game` project (or the folder containing it).
+
+2. **Set the base path in Vite**  
+   If the app will be at `https://username.github.io/coloc-game/` (repo name as subpath), add `base` to `vite.config.ts`:
+   ```ts
+   export default defineConfig({
+     base: '/coloc-game/',   // Replace with your repo name
+     plugins: [react()],
+     // ...
+   });
+   ```
+   If the repo is `username.github.io` (user/organization site), use `base: '/'`.
+
+3. **Build the frontend with the backend URL**  
+   Replace `https://your-backend-url.example.com` with the URL from Part 1:
+   ```bash
+   VITE_SOCKET_URL=https://your-backend-url.example.com npm run build
+   ```
+   This creates the `dist/` folder with the production app.
+
+4. **Deploy `dist/` to GitHub Pages**
+
+   **Method A: Using `gh-pages` (recommended)**
+
+   ```bash
+   npm install --save-dev gh-pages
+   ```
+
+   Add to `package.json` (adjust the `deploy` script and `homepage`):
+   ```json
+   "scripts": {
+     "deploy": "gh-pages -d dist"
+   },
+   "homepage": "https://YOUR_USERNAME.github.io/coloc-game"
+   ```
+   Replace `YOUR_USERNAME` and `coloc-game` with your GitHub username and repo name.
+
+   Build and deploy (run the build with your backend URL, then deploy):
+   ```bash
+   VITE_SOCKET_URL=https://your-backend-url.example.com npm run build
+   npm run deploy
+   ```
+   The first time, `gh-pages` will prompt for your GitHub credentials. It pushes the contents of `dist/` to the `gh-pages` branch.
+
+   **Method B: Using GitHub Actions**
+
+   Create `.github/workflows/deploy.yml`:
+   ```yaml
+   name: Deploy to GitHub Pages
+
+   on:
+     push:
+       branches: [main]
+
+   jobs:
+     deploy:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+
+         - uses: actions/setup-node@v4
+           with:
+             node-version: '20'
+             cache: 'npm'
+
+         - run: npm ci
+         - run: npm run build
+           env:
+             VITE_SOCKET_URL: ${{ secrets.VITE_SOCKET_URL }}
+
+         - uses: peaceiris/actions-gh-pages@v3
+           with:
+             github_token: ${{ secrets.GITHUB_TOKEN }}
+             publish_dir: ./dist
+   ```
+
+   In your repo, go to **Settings** → **Secrets and variables** → **Actions** → **New repository secret**. Add `VITE_SOCKET_URL` with your backend URL.
+
+   Push to `main`; the workflow will build and deploy automatically.
+
+5. **Enable GitHub Pages**  
+   In the repo: **Settings** → **Pages** → **Source**: select **Deploy from a branch** → **gh-pages** branch → **/ (root)** → Save.
+
+6. **Share the URL**  
+   After a few minutes, the app is live at `https://YOUR_USERNAME.github.io/coloc-game/` (or your custom domain). Share this URL with players.
+
+---
+
+### Summary
+
+| Step | Action |
+|------|--------|
+| 1 | Deploy backend to Railway or Render; copy the live URL |
+| 2 | Set `base` in `vite.config.ts` to match your GitHub Pages path |
+| 3 | Build with `VITE_SOCKET_URL` set to the backend URL |
+| 4 | Deploy `dist/` to GitHub Pages (`gh-pages` or Actions) |
+| 5 | Share the GitHub Pages URL with players |
 
 ## Scripts
 
-| Command         | Description                |
-|----------------|----------------------------|
-| `npm run dev`  | Start dev server (hot reload) |
-| `npm run build`| Production build to `dist/` |
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Start dev server (hot reload) |
+| `npm run build` | Production build to `dist/` |
 | `npm run preview` | Preview production build |
 
-**Backend (remote play):** From the `server/` folder: `npm install` then `npm start` (listens on port 3001). Set `VITE_SOCKET_URL` in the frontend to the server URL so the app syncs state across devices.
+**Backend** (from `server/`): `npm start` (listens on port 3001). Use `npm run kill-port` to free port 3001 if needed, or `npm run dev:fresh` to kill and restart.
 
 ## Stack
 
@@ -121,78 +213,6 @@ Everything needed to run the app is inside this repo: no external file paths or 
 - Zustand (state; syncs with server when `VITE_SOCKET_URL` is set)
 - Socket.io (client + server for remote play)
 - TailwindCSS
-
-Game state is in-memory by default; multiple browser tabs share state only on the same machine. For real multi-device play you’d a backend — use the [backend and remote-play steps](#how-to-run-the-backend-and-play-remotely) above.
-
-## Deploying so others can join remotely
-
-You can put the app on the internet so everyone uses the same URL. There are two parts: **hosting the app** and **sharing game state across devices**.
-
-### 1. Host the app online (same URL for everyone)
-
-Build the app and deploy the output to a free static host. Then you can share one link (e.g. `https://your-app.vercel.app`) with all participants.
-
-**Build once:**
-```bash
-npm run build
-```
-This creates a `dist/` folder with the production app.
-
-**Deploy to a host** (pick one):
-
-| Host | Best for | How |
-|------|----------|-----|
-| **Vercel** | Easiest, great with GitHub | Sign up at [vercel.com](https://vercel.com), import your GitHub repo, deploy. Or install Vercel CLI and run `npx vercel` in the project folder. |
-| **Netlify** | Simple, drag-and-drop or Git | Sign up at [netlify.com](https://netlify.com), connect the repo or drag the `dist/` folder into the Netlify dashboard. Set build command: `npm run build`, publish directory: `dist`. |
-| **GitHub Pages** | Free, good if repo is on GitHub | After `npm run build`, push the contents of `dist/` to a `gh-pages` branch or use the `gh-pages` npm package. See [Vite docs: GitHub Pages](https://vitejs.dev/guide/static-deploy.html#github-pages). |
-
-After deployment, everyone can open the same URL. If you do **not** run the backend (below), see the limitation in the next section.
-
-### 2. Backend and remote play (included server)
-
-The repo includes a **Node.js + Socket.io server** so GM and teams on different devices share the same game state. For **step-by-step instructions** to run the backend and play remotely, see [How to run the backend and play remotely](#how-to-run-the-backend-and-play-remotely) above.
-
-**Deploying the server for internet play:** Host the `server/` app on a Node-friendly host (e.g. [Railway](https://railway.app), [Render](https://render.com), [Fly.io](https://fly.io)). Set the `PORT` env var if required. Then set `VITE_SOCKET_URL` in your **frontend** build to the server’s public URL (e.g. `https://coloc-game.railway.app`). Deploy the frontend (Vercel, Netlify, etc.) with that env var set so all players connect to the same backend.
-
-**Without the backend:** If you don’t set `VITE_SOCKET_URL`, the app runs in **local-only** mode: state stays in the browser. GM and team can share one session only by using different tabs on the **same** computer.
-
-## Publish to GitHub
-
-To turn this folder into a Git repo and push it to GitHub:
-
-1. **In Terminal, go to the project folder:**
-   ```bash
-   cd path/to/coloc-game
-   ```
-   (Use the real path, e.g. `~/Documents/Coloc_game_app/coloc-game`.)
-
-2. **Initialize Git and make the first commit** (either run the script or the commands):
-   ```bash
-   bash setup-github.sh
-   ```
-   Or by hand:
-   ```bash
-   git init
-   git add -A
-   git status
-   git commit -m "Initial commit: coLoc Game web app"
-   ```
-
-3. **Create a new repository on GitHub**
-   - Go to [github.com/new](https://github.com/new).
-   - Name it e.g. `coloc-game` (or any name you like).
-   - Do **not** add a README, .gitignore, or license (this project already has them).
-   - Click **Create repository**.
-
-4. **Connect this folder to GitHub and push:**
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/coloc-game.git
-   git branch -M main
-   git push -u origin main
-   ```
-   Replace `YOUR_USERNAME` with your GitHub username (and `coloc-game` if you used a different repo name).
-
-After that, the code is on GitHub and you can share the repo link or clone it on another machine.
 
 ## Reference
 

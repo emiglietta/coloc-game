@@ -473,6 +473,13 @@ export function TeamView() {
 
   const isPlanningPhase = session?.currentPhase === 'acquisition' || session?.currentPhase === 'analysis';
 
+  const handleExperimentAssign = React.useCallback(
+    (expNum: 1 | 2 | 3 | 4 | 5 | 6, isLive: boolean, d1: number, d2: number) => {
+      if (team) setTeamExperiment(team.id, expNum, isLive, { d1, d2 });
+    },
+    [team?.id, setTeamExperiment]
+  );
+
   if (!team || !session) {
     return (
       <div className="card space-y-3">
@@ -558,13 +565,6 @@ export function TeamView() {
   const isReviewPhase = session?.currentPhase === 'review';
   const hasAssignedExperiment = team.experiment.number >= 1;
   const experiment = hasAssignedExperiment ? experiments.find((e) => e.id === team.experiment.number) : null;
-
-  const handleExperimentAssign = React.useCallback(
-    (expNum: 1 | 2 | 3 | 4 | 5 | 6, isLive: boolean, d1: number, d2: number) => {
-      setTeamExperiment(team.id, expNum, isLive, { d1, d2 });
-    },
-    [team.id, setTeamExperiment]
-  );
 
   return (
     <div className="space-y-4">
