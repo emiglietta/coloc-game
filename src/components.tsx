@@ -443,7 +443,7 @@ export function GMDashboard() {
 }
 
 export function TeamView() {
-  const { currentSessionId, sessions, currentTeamId, joinSessionAsTeam, teams, selectCard, deselectCard, setTeamExperiment } =
+  const { currentSessionId, sessions, currentTeamId, joinSessionAsTeam, teams, selectCard, deselectCard, setTeamExperiment, joinError, isJoining, socket } =
     useGameStore();
   const [sessionCodeInput, setSessionCodeInput] = React.useState('');
   const [teamName, setTeamName] = React.useState('');
@@ -451,23 +451,25 @@ export function TeamView() {
   const [tech, setTech] = React.useState('');
   const [postdoc, setPostdoc] = React.useState('');
   const [grad, setGrad] = React.useState('');
-  const [error, setError] = React.useState<string | null>(null);
+  const [localError, setLocalError] = React.useState<string | null>(null);
 
   const session = currentSessionId ? sessions[currentSessionId] : null;
   const team = currentTeamId ? teams[currentTeamId] : null;
 
   const handleJoin = () => {
-    setError(null);
+    setLocalError(null);
     const joined = joinSessionAsTeam(sessionCodeInput.trim().toUpperCase(), teamName, {
       pi,
       microscopeTech: tech,
       postdoc,
       gradStudent: grad
     });
-    if (!joined) {
-      setError('Session not found. Check the code with your GM.');
+    if (!joined && !socket?.connected) {
+      setLocalError('Session not found. Check the code with your GM.');
     }
   };
+
+  const error = joinError ?? localError;
 
   const isPlanningPhase = session?.currentPhase === 'acquisition' || session?.currentPhase === 'analysis';
 
@@ -526,12 +528,14 @@ export function TeamView() {
           </label>
         </div>
         {error && <p className="text-xs text-red-300">{error}</p>}
+        {isJoining && <p className="text-xs text-sky-300">Joining session…</p>}
         <button
           type="button"
           onClick={handleJoin}
-          className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+          disabled={isJoining}
+          className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Join
+          {isJoining ? 'Joining…' : 'Join'}
         </button>
       </div>
     );
@@ -549,9 +553,9 @@ export function TeamView() {
 
   const acquisitionCards = availableCards.filter((c) => c.category === 'microscopy');
   const analysisCards = availableCards.filter((c) => c.category === 'analysis');
-  const showAcquisitionCards = session.currentPhase === 'acquisition' || session.currentPhase === 'analysis';
-  const showAnalysisCards = session.currentPhase === 'analysis';
-  const isReviewPhase = session.currentPhase === 'review';
+  const showAcquisitionCards = session?.currentPhase === 'acquisition' || session?.currentPhase === 'analysis';
+  const showAnalysisCards = session?.currentPhase === 'analysis';
+  const isReviewPhase = session?.currentPhase === 'review';
   const hasAssignedExperiment = team.experiment.number >= 1;
   const experiment = hasAssignedExperiment ? experiments.find((e) => e.id === team.experiment.number) : null;
 
@@ -568,7 +572,7 @@ export function TeamView() {
         <div>
           <h2 className="text-xl font-semibold">{team.name}</h2>
           <p className="text-xs text-slate-200">
-            Session {session.sessionCode} • Phase: {phaseLabel[session.currentPhase]}
+            Session {session.sessionCode} • Phase: {phaseLabel[session.currentPhase] ?? session.currentPhase}
           </p>
           <p className="mt-1 text-xs text-sky-100">
             Total time:{' '}

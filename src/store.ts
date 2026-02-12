@@ -10,6 +10,8 @@ export interface GameState {
   role: 'gm' | 'team' | null;
   currentTeamId: string | null;
   socket: Socket | null;
+  joinError: string | null;
+  isJoining: boolean;
 
   setSocket(socket: Socket | null): void;
   createSession(settings: Session['settings']): Session;
@@ -33,6 +35,7 @@ export interface GameState {
   unassignReviewerDetail(teamId: string, cardId: string): void;
   adjustPhaseTimer(sessionId: string, deltaMinutes: number): void;
   setShowTimerToParticipants(sessionId: string, show: boolean): void;
+  clearJoinError(): void;
 }
 
 const genId = () => crypto.randomUUID();
@@ -73,6 +76,8 @@ export const useGameStore = create<GameState>((set, get) => ({
   role: null,
   currentTeamId: null,
   socket: null,
+  joinError: null,
+  isJoining: false,
 
   setRole: (role) => set({ role }),
   setCurrentSession: (currentSessionId) => set({ currentSessionId }),
@@ -111,14 +116,32 @@ export const useGameStore = create<GameState>((set, get) => ({
     return session;
   },
 
+  clearJoinError: () => set({ joinError: null }),
+
   joinSessionAsTeam: (sessionCode, name, members) => {
     const { socket, sessions } = get();
+    set({ joinError: null });
     if (socket?.connected) {
+      set({ isJoining: true });
       socket.emit(
         'action',
         { type: 'joinSessionAsTeam', payload: { sessionCode, name, members } },
-        (ack: { teamId?: string; sessionId?: string }) => {
-          if (ack?.teamId) set({ currentTeamId: ack.teamId, currentSessionId: ack.sessionId ?? null, role: 'team' });
+        (ack: { teamId?: string; sessionId?: string; team?: Team; session?: Session; error?: string }) => {
+          set({ isJoining: false });
+          if (ack?.error) {
+            set({ joinError: ack.error });
+            return;
+          }
+          if (ack?.teamId) {
+            set((state) => ({
+              currentTeamId: ack.teamId!,
+              currentSessionId: ack.sessionId ?? null,
+              role: 'team' as const,
+              joinError: null,
+              ...(ack.team && { teams: { ...state.teams, [ack.teamId!]: ack.team } }),
+              ...(ack.session && ack.sessionId && { sessions: { ...state.sessions, [ack.sessionId]: ack.session } })
+            }));
+          }
         }
       );
       return null;

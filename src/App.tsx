@@ -14,10 +14,15 @@ export default function App() {
     if (!SOCKET_URL?.trim()) return;
     const socket = io(SOCKET_URL.trim());
     socket.on('connect', () => setSocket(socket));
-    socket.on('state', (data: { sessions: Record<string, unknown>; teams: Record<string, unknown> }) => {
-      useGameStore.setState({ sessions: data.sessions || {}, teams: data.teams || {} });
+    socket.on('state', (data: { sessions?: Record<string, unknown>; teams?: Record<string, unknown> }) => {
+      const sessions = data?.sessions && typeof data.sessions === 'object' ? data.sessions : {};
+      const teams = data?.teams && typeof data.teams === 'object' ? data.teams : {};
+      useGameStore.setState({ sessions, teams });
     });
-    socket.on('disconnect', () => setSocket(null));
+    socket.on('disconnect', () => {
+      setSocket(null);
+      useGameStore.setState({ isJoining: false });
+    });
     return () => {
       socket.disconnect();
       setSocket(null);

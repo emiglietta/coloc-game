@@ -86,7 +86,7 @@ export function joinSessionAsTeam(state, { sessionCode, name, members }) {
       sessions: state.sessions,
       teams: { ...state.teams, [id]: team }
     },
-    ack: { teamId: id, sessionId: session.id, team }
+    ack: { teamId: id, sessionId: session.id, team, session }
   };
 }
 
