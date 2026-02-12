@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { io } from 'socket.io-client';
 import { RoleSelector, GMDashboard, TeamView } from './components';
 import { useGameStore } from './store';
+import { assetPath } from './assetPath';
 
 const SOCKET_URL = import.meta.env.VITE_SOCKET_URL as string | undefined;
 
@@ -34,7 +35,7 @@ export default function App() {
       <header className="flex min-h-[100px] items-center justify-center border-b border-slate-800 bg-slate-950/90 py-3 md:min-h-[140px] md:py-4">
         <div className="flex w-full max-w-6xl items-center justify-center px-4">
           <img
-            src="/coLoc_logo.png"
+            src={assetPath('/coLoc_logo.png')}
             alt="coLoc Game"
             className="h-[72px] w-auto object-contain md:h-[100px] lg:h-[120px]"
           />

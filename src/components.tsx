@@ -2,6 +2,7 @@ import React from 'react';
 import { useGameStore, availableCards } from './store';
 import { Card, SessionStatus } from './models';
 import { experiments, reviewIssueCards, reviewDetailsCards } from './data';
+import { assetPath } from './assetPath';
 
 const phaseLabel: Record<SessionStatus, string> = {
   setup: 'Setup',
@@ -82,7 +83,7 @@ function CardPill({ card, onClick, selected }: { card: Card; onClick?: () => voi
       <div className="flex flex-col items-center">
         {card.iconPath && (
           <img
-            src={card.iconPath}
+            src={assetPath(card.iconPath)}
             alt={card.name}
             className="h-40 w-40 md:h-48 md:w-48 flex-none rounded-md object-contain"
           />
@@ -344,7 +345,7 @@ export function GMDashboard() {
                     <span className="text-slate-200">LIVE experiment</span>
                     {team.experiment.isLive && (
                       <img
-                        src="/cards/live-experiment.png"
+                        src={assetPath('/cards/live-experiment.png')}
                         alt="Live experiment card"
                         className="ml-1 h-8 w-8 rounded border border-slate-700 bg-slate-950/60 object-contain"
                       />
@@ -396,7 +397,7 @@ export function GMDashboard() {
                             title={card.name}
                             className={`flex flex-col items-center rounded border p-0.5 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
                           >
-                            <img src={card.iconPath} alt={card.name} className="h-20 w-20 md:h-24 md:w-24 object-contain" />
+                            <img src={assetPath(card.iconPath)} alt={card.name} className="h-20 w-20 md:h-24 md:w-24 object-contain" />
                             <span className="mt-0.5 text-[10px]" title={`+${card.timeCost} clock(s)`}>
                               {Array.from({ length: card.timeCost }).map((_, i) => (
                                 <span key={i}>⏰</span>
@@ -420,7 +421,7 @@ export function GMDashboard() {
                             title={card.name}
                             className={`flex flex-col items-center rounded border p-0.5 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
                           >
-                            <img src={card.iconPath} alt={card.name} className="h-20 w-20 md:h-24 md:w-24 object-contain" />
+                            <img src={assetPath(card.iconPath)} alt={card.name} className="h-20 w-20 md:h-24 md:w-24 object-contain" />
                             <span className="mt-0.5 text-[10px]" title={`+${card.timeCost} clock(s)`}>
                               {Array.from({ length: card.timeCost }).map((_, i) => (
                                 <span key={i}>⏰</span>
@@ -616,7 +617,7 @@ export function TeamView() {
           <div className="flex flex-col gap-3 md:flex-row md:items-start">
             {experiment.iconPath && (
               <img
-                src={experiment.iconPath}
+                src={assetPath(experiment.iconPath)}
                 alt={experiment.title}
                 className="w-full max-w-xl flex-none rounded-md border border-slate-800 bg-slate-950/60 object-contain md:w-1/2"
               />
@@ -644,7 +645,7 @@ export function TeamView() {
               </span>
               {team.experiment.isLive && (
                 <img
-                  src="/cards/live-experiment.png"
+                  src={assetPath('/cards/live-experiment.png')}
                   alt="Live experiment"
                   className="h-40 w-40 md:h-48 md:w-48 rounded-md border border-slate-700 bg-slate-950/60 object-contain"
                 />
@@ -715,7 +716,7 @@ export function TeamView() {
                   <div className="flex flex-wrap gap-2">
                     {(team.reviewOutcome?.assignedConcerns || []).map((c) => (
                       <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
-                        <img src={c.iconPath} alt={c.name} className="h-40 w-40 md:h-48 md:w-48 object-contain" />
+                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-40 w-40 md:h-48 md:w-48 object-contain" />
                         <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
                           {Array.from({ length: c.timeCost }).map((_, i) => (
                             <span key={i}>⏰</span>
@@ -734,7 +735,7 @@ export function TeamView() {
                   ) : (
                     (team.reviewOutcome?.assignedDetails || []).map((c) => (
                       <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
-                        <img src={c.iconPath} alt={c.name} className="h-40 w-40 md:h-48 md:w-48 object-contain" />
+                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-40 w-40 md:h-48 md:w-48 object-contain" />
                         <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
                           {Array.from({ length: c.timeCost }).map((_, i) => (
                             <span key={i}>⏰</span>
