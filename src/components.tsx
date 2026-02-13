@@ -441,7 +441,7 @@ export function GMDashboard() {
                 <div className="mt-2 flex flex-wrap gap-3">
                   <div>
                     <p className="mb-1 text-[11px] font-medium text-slate-300">Add acquisition card</p>
-                    <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
                       {acquisitionCardPool
                         .filter((c) => !team.selectedCards.acquisition.some((x) => x.id === c.id))
                         .map((c) => (
@@ -450,10 +450,10 @@ export function GMDashboard() {
                             type="button"
                             onClick={() => gmAddCardToTeam(team.id, 'acquisition', c)}
                             title={`${c.name} (+${c.timeCost}⏰)`}
-                            className="flex flex-col items-center rounded border border-slate-600 bg-slate-800/50 p-0.5 hover:border-sky-500"
+                            className="flex flex-col items-center rounded border border-slate-600 bg-slate-800/50 p-1 hover:border-sky-500 min-w-0 w-16"
                           >
-                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-10 w-10 object-contain" />
-                            <span className="text-[9px] max-w-[3rem] truncate">{c.name}</span>
+                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
+                            <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
                           </button>
                         ))}
                       {acquisitionCardPool.filter((c) => !team.selectedCards.acquisition.some((x) => x.id === c.id)).length === 0 && (
@@ -463,7 +463,7 @@ export function GMDashboard() {
                   </div>
                   <div>
                     <p className="mb-1 text-[11px] font-medium text-slate-300">Add analysis card</p>
-                    <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
                       {analysisCardPool
                         .filter((c) => !team.selectedCards.analysis.some((x) => x.id === c.id))
                         .map((c) => (
@@ -472,10 +472,10 @@ export function GMDashboard() {
                             type="button"
                             onClick={() => gmAddCardToTeam(team.id, 'analysis', c)}
                             title={`${c.name} (+${c.timeCost}⏰)`}
-                            className="flex flex-col items-center rounded border border-slate-600 bg-slate-800/50 p-0.5 hover:border-sky-500"
+                            className="flex flex-col items-center rounded border border-slate-600 bg-slate-800/50 p-1 hover:border-sky-500 min-w-0 w-16"
                           >
-                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-10 w-10 object-contain" />
-                            <span className="text-[9px] max-w-[3rem] truncate">{c.name}</span>
+                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
+                            <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
                           </button>
                         ))}
                       {analysisCardPool.filter((c) => !team.selectedCards.analysis.some((x) => x.id === c.id)).length === 0 && (
@@ -498,10 +498,13 @@ export function GMDashboard() {
                             type="button"
                             onClick={() => (assigned ? unassignReviewerConcern(team.id, card.id) : assignReviewerConcern(team.id, card))}
                             title={card.name}
-                            className={`flex flex-col items-center rounded border p-0.5 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
+                            className={`flex flex-col items-center rounded border p-1 min-w-0 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
                           >
-                            <img src={assetPath(card.iconPath)} alt={card.name} className="h-20 w-20 md:h-24 md:w-24 object-contain" />
-                            <span className="mt-0.5 text-[10px]" title={`+${card.timeCost} clock(s)`}>
+                            <img src={assetPath(card.iconPath)} alt={card.name} className="h-24 w-24 md:h-28 md:w-28 object-contain flex-shrink-0" />
+                            <span className="mt-0.5 text-[10px] text-center break-words line-clamp-2 w-full px-0.5" title={`${card.name} (+${card.timeCost} clock(s))`}>
+                              {card.name}
+                            </span>
+                            <span className="mt-0.5 text-[10px]">
                               {Array.from({ length: card.timeCost }).map((_, i) => (
                                 <span key={i}>⏰</span>
                               ))}
@@ -522,10 +525,13 @@ export function GMDashboard() {
                             type="button"
                             onClick={() => (assigned ? unassignReviewerDetail(team.id, card.id) : assignReviewerDetail(team.id, card))}
                             title={card.name}
-                            className={`flex flex-col items-center rounded border p-0.5 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
+                            className={`flex flex-col items-center rounded border p-1 min-w-0 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
                           >
-                            <img src={assetPath(card.iconPath)} alt={card.name} className="h-20 w-20 md:h-24 md:w-24 object-contain" />
-                            <span className="mt-0.5 text-[10px]" title={`+${card.timeCost} clock(s)`}>
+                            <img src={assetPath(card.iconPath)} alt={card.name} className="h-24 w-24 md:h-28 md:w-28 object-contain flex-shrink-0" />
+                            <span className="mt-0.5 text-[10px] text-center break-words line-clamp-2 w-full px-0.5" title={`${card.name} (+${card.timeCost} clock(s))`}>
+                              {card.name}
+                            </span>
+                            <span className="mt-0.5 text-[10px]">
                               {Array.from({ length: card.timeCost }).map((_, i) => (
                                 <span key={i}>⏰</span>
                               ))}
@@ -881,7 +887,7 @@ export function TeamView() {
                   <div className="flex flex-wrap gap-2">
                     {(team.reviewOutcome?.assignedConcerns || []).map((c) => (
                       <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
-                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-40 w-40 md:h-48 md:w-48 object-contain" />
+                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-60 w-60 md:h-72 md:w-72 object-contain" />
                         <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
                           {Array.from({ length: c.timeCost }).map((_, i) => (
                             <span key={i}>⏰</span>
@@ -900,7 +906,7 @@ export function TeamView() {
                   ) : (
                     (team.reviewOutcome?.assignedDetails || []).map((c) => (
                       <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
-                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-40 w-40 md:h-48 md:w-48 object-contain" />
+                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-60 w-60 md:h-72 md:w-72 object-contain" />
                         <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
                           {Array.from({ length: c.timeCost }).map((_, i) => (
                             <span key={i}>⏰</span>
