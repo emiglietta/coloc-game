@@ -79,7 +79,8 @@ export function joinSessionAsTeam(state, { sessionCode, name, members }) {
       finalScore: 0,
       assignedConcerns: [],
       assignedDetails: []
-    }
+    },
+    gmAddedCardIds: []
   };
   return {
     state: {
@@ -276,6 +277,44 @@ export function unassignReviewerDetail(state, { teamId, cardId }) {
   };
 }
 
+export function gmAddCardToTeam(state, { teamId, phase, card }) {
+  const team = state.teams[teamId];
+  if (!team) return { state };
+  const alreadySelected = team.selectedCards[phase].some((c) => c.id === card.id);
+  if (alreadySelected) return { state };
+  const gmAddedIds = team.gmAddedCardIds || [];
+  const updatedTeam = {
+    ...team,
+    selectedCards: {
+      ...team.selectedCards,
+      [phase]: [...team.selectedCards[phase], card]
+    },
+    gmAddedCardIds: [...gmAddedIds, card.id]
+  };
+  updatedTeam.totalTimeCost = calcTimeCost(updatedTeam);
+  return {
+    state: { sessions: state.sessions, teams: { ...state.teams, [teamId]: updatedTeam } }
+  };
+}
+
+export function gmRemoveCardFromTeam(state, { teamId, phase, cardId }) {
+  const team = state.teams[teamId];
+  if (!team) return { state };
+  const gmAddedIds = (team.gmAddedCardIds || []).filter((id) => id !== cardId);
+  const updatedTeam = {
+    ...team,
+    selectedCards: {
+      ...team.selectedCards,
+      [phase]: team.selectedCards[phase].filter((c) => c.id !== cardId)
+    },
+    gmAddedCardIds: gmAddedIds
+  };
+  updatedTeam.totalTimeCost = calcTimeCost(updatedTeam);
+  return {
+    state: { sessions: state.sessions, teams: { ...state.teams, [teamId]: updatedTeam } }
+  };
+}
+
 const actions = {
   createSession,
   joinSessionAsTeam,
@@ -289,7 +328,9 @@ const actions = {
   assignReviewerConcern,
   unassignReviewerConcern,
   assignReviewerDetail,
-  unassignReviewerDetail
+  unassignReviewerDetail,
+  gmAddCardToTeam,
+  gmRemoveCardFromTeam
 };
 
 export function applyAction(state, type, payload) {

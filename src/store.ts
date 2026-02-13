@@ -33,9 +33,12 @@ export interface GameState {
   unassignReviewerConcern(teamId: string, cardId: string): void;
   assignReviewerDetail(teamId: string, card: Card): void;
   unassignReviewerDetail(teamId: string, cardId: string): void;
+  gmAddCardToTeam(teamId: string, phase: 'acquisition' | 'analysis', card: Card): void;
+  gmRemoveCardFromTeam(teamId: string, phase: 'acquisition' | 'analysis', cardId: string): void;
   adjustPhaseTimer(sessionId: string, deltaMinutes: number): void;
   setShowTimerToParticipants(sessionId: string, show: boolean): void;
   clearJoinError(): void;
+  joinExistingTeam(sessionCode: string, teamId: string): boolean;
 }
 
 const genId = () => crypto.randomUUID();
@@ -171,7 +174,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         finalScore: 0,
         assignedConcerns: [],
         assignedDetails: []
-      }
+      },
+      gmAddedCardIds: []
     };
     set((state) => ({
       teams: { ...state.teams, [id]: team },
@@ -448,6 +452,61 @@ export const useGameStore = create<GameState>((set, get) => ({
       updated.totalTimeCost = calcTimeCost(updated);
       return { teams: { ...state.teams, [teamId]: updated } };
     });
+  },
+
+  gmAddCardToTeam: (teamId, phase, card) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'gmAddCardToTeam', payload: { teamId, phase, card } });
+      return;
+    }
+    set((state) => {
+      const team = state.teams[teamId];
+      if (!team) return state;
+      const alreadySelected = team.selectedCards[phase].some((c) => c.id === card.id);
+      if (alreadySelected) return state;
+      const gmAddedIds = team.gmAddedCardIds || [];
+      const updated: Team = {
+        ...team,
+        selectedCards: { ...team.selectedCards, [phase]: [...team.selectedCards[phase], card] },
+        gmAddedCardIds: [...gmAddedIds, card.id]
+      };
+      updated.totalTimeCost = calcTimeCost(updated);
+      return { teams: { ...state.teams, [teamId]: updated } };
+    });
+  },
+
+  gmRemoveCardFromTeam: (teamId, phase, cardId) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'gmRemoveCardFromTeam', payload: { teamId, phase, cardId } });
+      return;
+    }
+    set((state) => {
+      const team = state.teams[teamId];
+      if (!team) return state;
+      const gmAddedIds = (team.gmAddedCardIds || []).filter((id) => id !== cardId);
+      const updated: Team = {
+        ...team,
+        selectedCards: {
+          ...team.selectedCards,
+          [phase]: team.selectedCards[phase].filter((c) => c.id !== cardId)
+        },
+        gmAddedCardIds: gmAddedIds
+      };
+      updated.totalTimeCost = calcTimeCost(updated);
+      return { teams: { ...state.teams, [teamId]: updated } };
+    });
+  },
+
+  joinExistingTeam: (sessionCode, teamId) => {
+    const { sessions, teams } = get();
+    const session = Object.values(sessions).find((s) => s.sessionCode === sessionCode.trim().toUpperCase());
+    if (!session) return false;
+    const team = teams[teamId];
+    if (!team || team.sessionId !== session.id) return false;
+    set({ currentTeamId: teamId, currentSessionId: session.id, role: 'team', joinError: null });
+    return true;
   }
 }));
 

@@ -88,6 +88,8 @@ export interface Team {
     /** Details cards assigned by GM (Experimental details); add timeCost to team total. */
     assignedDetails: Card[];
   };
+  /** Card IDs in selectedCards that were added by the GM during review (show magenta outline). */
+  gmAddedCardIds?: string[];
 }
 
 export interface ExperimentDefinition {

@@ -117,6 +117,9 @@ export function RoleSelector() {
   );
 }
 
+const acquisitionCardPool = availableCards.filter((c) => c.category === 'microscopy');
+const analysisCardPool = availableCards.filter((c) => c.category === 'analysis');
+
 export function GMDashboard() {
   const {
     sessions,
@@ -130,9 +133,12 @@ export function GMDashboard() {
     unassignReviewerConcern,
     assignReviewerDetail,
     unassignReviewerDetail,
+    gmAddCardToTeam,
+    gmRemoveCardFromTeam,
     adjustPhaseTimer,
     setShowTimerToParticipants
   } = useGameStore();
+  const [expandedTeamCards, setExpandedTeamCards] = React.useState<Record<string, boolean>>({});
   const session = currentSessionId ? sessions[currentSessionId] : null;
 
   const [numTeams, setNumTeams] = React.useState(4);
@@ -300,11 +306,23 @@ export function GMDashboard() {
         <div className="grid gap-3 md:grid-cols-2">
           {sessionTeams.map((team) => {
             const experiment = experiments.find((e) => e.id === team.experiment.number);
+            const showCards = expandedTeamCards[team.id] ?? false;
             return (
               <div key={team.id} className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 space-y-2">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h4 className="text-sm font-semibold">{team.name}</h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-sm font-semibold">{team.name}</h4>
+                      {session.currentPhase === 'review' && (
+                        <button
+                          type="button"
+                          onClick={() => setExpandedTeamCards((p) => ({ ...p, [team.id]: !p[team.id] }))}
+                          className="text-[11px] text-sky-400 hover:text-sky-300"
+                        >
+                          {showCards ? 'Hide cards' : 'Show cards'}
+                        </button>
+                      )}
+                    </div>
                     <p className="text-[11px] text-slate-300">
                       {team.experiment.number === 0
                         ? 'No experiment assigned'
@@ -352,13 +370,50 @@ export function GMDashboard() {
                     )}
                   </label>
                 </div>
+              {showCards && (
+                <div className="mt-2">
+                  <p className="mb-1 text-[11px] font-semibold text-slate-200">Selected cards</p>
+                  <div className="flex flex-nowrap gap-2 overflow-x-auto pb-1">
+                    {[...team.selectedCards.acquisition, ...team.selectedCards.analysis].map((c) => {
+                      const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
+                      return (
+                        <div
+                          key={c.id}
+                          className={`relative flex flex-col items-center flex-shrink-0 rounded border p-1 ${isGmAdded ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/50' : 'border-slate-600 bg-slate-800/50'}`}
+                          title={c.name}
+                        >
+                          {isGmAdded && (
+                            <button
+                              type="button"
+                              onClick={() => gmRemoveCardFromTeam(team.id, team.selectedCards.acquisition.some(x => x.id === c.id) ? 'acquisition' : 'analysis', c.id)}
+                              className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-fuchsia-500 text-white text-[10px] leading-none hover:bg-fuchsia-400"
+                              title="Remove (GM added)"
+                            >
+                              ×
+                            </button>
+                          )}
+                          <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 md:h-16 md:w-16 object-contain" />
+                          <span className="mt-0.5 flex gap-0.5 text-[10px]">
+                            {Array.from({ length: c.timeCost }).map((_, i) => (
+                              <span key={i}>⏰</span>
+                            ))}
+                          </span>
+                        </div>
+                      );
+                    })}
+                    {(team.selectedCards.acquisition.length === 0 && team.selectedCards.analysis.length === 0) && (
+                      <span className="text-xs text-slate-500 py-2">No cards</span>
+                    )}
+                  </div>
+                </div>
+              )}
               <div className="mt-2 grid gap-2 text-[11px] md:grid-cols-2">
                 <div>
                   <p className="mb-1 font-semibold text-slate-200">Acquisition</p>
                   <ul className="space-y-1">
                     {team.selectedCards.acquisition.map((c) => (
                       <li key={c.id} className="flex items-center justify-between">
-                        <span>{c.name}</span>
+                        <span className={(team.gmAddedCardIds || []).includes(c.id) ? 'text-fuchsia-300' : ''}>{c.name}</span>
                         <ClockIcons count={c.timeCost} />
                       </li>
                     ))}
@@ -372,7 +427,7 @@ export function GMDashboard() {
                   <ul className="space-y-1">
                     {team.selectedCards.analysis.map((c) => (
                       <li key={c.id} className="flex items-center justify-between">
-                        <span>{c.name}</span>
+                        <span className={(team.gmAddedCardIds || []).includes(c.id) ? 'text-fuchsia-300' : ''}>{c.name}</span>
                         <ClockIcons count={c.timeCost} />
                       </li>
                     ))}
@@ -382,6 +437,54 @@ export function GMDashboard() {
                   </ul>
                 </div>
               </div>
+              {session.currentPhase === 'review' && (
+                <div className="mt-2 flex flex-wrap gap-3">
+                  <div>
+                    <p className="mb-1 text-[11px] font-medium text-slate-300">Add acquisition card</p>
+                    <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                      {acquisitionCardPool
+                        .filter((c) => !team.selectedCards.acquisition.some((x) => x.id === c.id))
+                        .map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => gmAddCardToTeam(team.id, 'acquisition', c)}
+                            title={`${c.name} (+${c.timeCost}⏰)`}
+                            className="flex flex-col items-center rounded border border-slate-600 bg-slate-800/50 p-0.5 hover:border-sky-500"
+                          >
+                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-10 w-10 object-contain" />
+                            <span className="text-[9px] max-w-[3rem] truncate">{c.name}</span>
+                          </button>
+                        ))}
+                      {acquisitionCardPool.filter((c) => !team.selectedCards.acquisition.some((x) => x.id === c.id)).length === 0 && (
+                        <span className="text-[10px] text-slate-500">All selected</span>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <p className="mb-1 text-[11px] font-medium text-slate-300">Add analysis card</p>
+                    <div className="flex flex-wrap gap-1 max-h-32 overflow-y-auto">
+                      {analysisCardPool
+                        .filter((c) => !team.selectedCards.analysis.some((x) => x.id === c.id))
+                        .map((c) => (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => gmAddCardToTeam(team.id, 'analysis', c)}
+                            title={`${c.name} (+${c.timeCost}⏰)`}
+                            className="flex flex-col items-center rounded border border-slate-600 bg-slate-800/50 p-0.5 hover:border-sky-500"
+                          >
+                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-10 w-10 object-contain" />
+                            <span className="text-[9px] max-w-[3rem] truncate">{c.name}</span>
+                          </button>
+                        ))}
+                      {analysisCardPool.filter((c) => !team.selectedCards.analysis.some((x) => x.id === c.id)).length === 0 && (
+                        <span className="text-[10px] text-slate-500">All selected</span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
               {session.currentPhase === 'review' && (
                 <div className="mt-3 space-y-3 border-t border-slate-700 pt-3">
                   <div>
@@ -444,7 +547,7 @@ export function GMDashboard() {
 }
 
 export function TeamView() {
-  const { currentSessionId, sessions, currentTeamId, joinSessionAsTeam, teams, selectCard, deselectCard, setTeamExperiment, joinError, isJoining, socket } =
+  const { currentSessionId, sessions, currentTeamId, joinSessionAsTeam, joinExistingTeam, teams, selectCard, deselectCard, setTeamExperiment, joinError, isJoining, socket } =
     useGameStore();
   const [sessionCodeInput, setSessionCodeInput] = React.useState('');
   const [teamName, setTeamName] = React.useState('');
@@ -481,19 +584,55 @@ export function TeamView() {
     [team?.id, setTeamExperiment]
   );
 
+  const sessionByCode = sessionCodeInput.trim()
+    ? Object.values(sessions).find((s) => s.sessionCode === sessionCodeInput.trim().toUpperCase())
+    : null;
+  const existingTeamsForSession = sessionByCode
+    ? Object.values(teams).filter((t) => t.sessionId === sessionByCode.id)
+    : [];
+
   if (!team || !session) {
     return (
-      <div className="card space-y-3">
+      <div className="card space-y-4">
         <h2 className="text-xl font-semibold">Join a Session</h2>
-        <div className="grid gap-3 md:grid-cols-2">
+        <div>
           <label className="text-sm">
             Session code
             <input
               value={sessionCodeInput}
               onChange={(e) => setSessionCodeInput(e.target.value)}
+              placeholder="e.g. ABC123"
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm uppercase"
             />
           </label>
+        </div>
+
+        {sessionByCode && existingTeamsForSession.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-slate-200">Join existing team</h3>
+            <div className="flex flex-wrap gap-2">
+              {existingTeamsForSession.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => {
+                    setLocalError(null);
+                    if (joinExistingTeam(sessionCodeInput.trim().toUpperCase(), t.id)) return;
+                    setLocalError('Could not join team.');
+                  }}
+                  className="rounded-lg border border-slate-600 bg-slate-800/60 px-3 py-2 text-sm hover:border-emerald-500/60 hover:bg-slate-700/60"
+                >
+                  {t.name}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-slate-400">— or create a new team below —</p>
+          </div>
+        )}
+
+        <div className="space-y-2 border-t border-slate-700 pt-3">
+          <h3 className="text-sm font-medium text-slate-200">Create new team</h3>
+          <div className="grid gap-3 md:grid-cols-2">
           <label className="text-sm">
             Team name
             <input
@@ -534,7 +673,7 @@ export function TeamView() {
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
             />
           </label>
-        </div>
+          </div>
         {error && <p className="text-xs text-red-300">{error}</p>}
         {isJoining && <p className="text-xs text-sky-300">Joining session…</p>}
         <button
@@ -543,8 +682,9 @@ export function TeamView() {
           disabled={isJoining}
           className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isJoining ? 'Joining…' : 'Join'}
+          {isJoining ? 'Joining…' : 'Create team'}
         </button>
+        </div>
       </div>
     );
   }
@@ -707,6 +847,31 @@ export function TeamView() {
       {isReviewPhase && (
           <div className="card space-y-4">
             <h3 className="text-sm font-semibold">Review &amp; Defense</h3>
+            <div>
+              <h4 className="mb-2 text-xs font-semibold text-slate-200">Your selected cards</h4>
+              <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2">
+                {[...team.selectedCards.acquisition, ...team.selectedCards.analysis].map((c) => {
+                  const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
+                  return (
+                    <div
+                      key={c.id}
+                      className={`flex flex-col items-center flex-shrink-0 rounded border p-1 ${isGmAdded ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/50' : 'border-slate-600 bg-slate-800/50'}`}
+                      title={`${c.name}${isGmAdded ? ' (added by GM)' : ''} (+${c.timeCost} ⏰)`}
+                    >
+                      <img src={assetPath(c.iconPath)} alt={c.name} className="h-16 w-16 md:h-20 md:w-20 object-contain" />
+                      <span className="mt-0.5 flex gap-0.5 text-[10px]">
+                        {Array.from({ length: c.timeCost }).map((_, i) => (
+                          <span key={i}>⏰</span>
+                        ))}
+                      </span>
+                    </div>
+                  );
+                })}
+                {team.selectedCards.acquisition.length === 0 && team.selectedCards.analysis.length === 0 && (
+                  <p className="text-xs text-slate-500 py-4">No cards selected</p>
+                )}
+              </div>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <h4 className="mb-2 text-xs font-semibold text-slate-200">Reviewer&apos;s concerns</h4>
