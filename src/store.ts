@@ -39,6 +39,7 @@ export interface GameState {
   setShowTimerToParticipants(sessionId: string, show: boolean): void;
   clearJoinError(): void;
   joinExistingTeam(sessionCode: string, teamId: string): boolean;
+  joinSessionAsGM(gmCode: string): boolean;
 }
 
 const genId = () => crypto.randomUUID();
@@ -506,6 +507,14 @@ export const useGameStore = create<GameState>((set, get) => ({
     const team = teams[teamId];
     if (!team || team.sessionId !== session.id) return false;
     set({ currentTeamId: teamId, currentSessionId: session.id, role: 'team', joinError: null });
+    return true;
+  },
+
+  joinSessionAsGM: (gmCode) => {
+    const { sessions } = get();
+    const session = Object.values(sessions).find((s) => s.gmCode === gmCode.trim().toUpperCase());
+    if (!session) return false;
+    set({ currentSessionId: session.id, role: 'gm' });
     return true;
   }
 }));

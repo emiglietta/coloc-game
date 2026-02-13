@@ -94,13 +94,16 @@ function CardPill({ card, onClick, selected }: { card: Card; onClick?: () => voi
 }
 
 export function RoleSelector() {
-  const { role, setRole } = useGameStore();
+  const { role, setRole, currentTeamId } = useGameStore();
+  const isParticipant = role === 'team' && currentTeamId != null;
   return (
     <div className="mb-6 flex gap-3">
       <button
         type="button"
-        className={`card flex-1 text-center ${role === 'gm' ? 'ring-2 ring-sky-300' : ''}`}
-        onClick={() => setRole('gm')}
+        className={`card flex-1 text-center ${role === 'gm' ? 'ring-2 ring-sky-300' : ''} ${isParticipant ? 'pointer-events-none opacity-50' : ''}`}
+        onClick={() => !isParticipant && setRole('gm')}
+        disabled={isParticipant}
+        title={isParticipant ? 'Joined as participant—GM access blocked' : ''}
       >
         <h2 className="text-lg font-semibold">Game Master</h2>
         <p className="mt-1 text-sm text-slate-100/80">Create and control sessions.</p>
@@ -125,6 +128,7 @@ export function GMDashboard() {
     sessions,
     currentSessionId,
     createSession,
+    joinSessionAsGM,
     teams,
     advancePhase,
     previousPhase,
@@ -146,6 +150,14 @@ export function GMDashboard() {
   const [acqTime, setAcqTime] = React.useState(10);
   const [analysisTime, setAnalysisTime] = React.useState(10);
   const [mode, setMode] = React.useState<'time-attack' | 'budget'>('time-attack');
+  const [gmCodeInput, setGmCodeInput] = React.useState('');
+  const [gmJoinError, setGmJoinError] = React.useState<string | null>(null);
+
+  const handleJoinAsGM = () => {
+    setGmJoinError(null);
+    if (joinSessionAsGM(gmCodeInput.trim().toUpperCase())) return;
+    setGmJoinError('No session found with that GM code.');
+  };
 
   const sessionTeams = session
     ? Object.values(teams).filter((t) => t.sessionId === session.id)
@@ -163,9 +175,30 @@ export function GMDashboard() {
 
   if (!session) {
     return (
-      <div className="card">
+      <div className="space-y-4">
+        <div className="card">
+          <h3 className="mb-3 text-sm font-semibold text-slate-200">Join as additional GM</h3>
+          <p className="mb-2 text-xs text-slate-400">Have a GM code from another Game Master? Enter it to co-manage the session.</p>
+          <div className="flex gap-2">
+            <input
+              value={gmCodeInput}
+              onChange={(e) => setGmCodeInput(e.target.value)}
+              placeholder="GM code (e.g. XY7Z2A)"
+              className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm uppercase"
+            />
+            <button
+              type="button"
+              onClick={handleJoinAsGM}
+              className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-semibold text-white hover:bg-sky-500"
+            >
+              Join session
+            </button>
+          </div>
+          {gmJoinError && <p className="mt-2 text-xs text-red-400">{gmJoinError}</p>}
+        </div>
+        <div className="card">
         <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">GM Session Setup</h2>
+          <h2 className="text-xl font-semibold">Create new session</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="text-sm">
@@ -228,6 +261,7 @@ export function GMDashboard() {
         >
           Create Session
         </button>
+        </div>
       </div>
     );
   }
