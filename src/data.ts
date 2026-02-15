@@ -507,34 +507,35 @@ export const cards: Card[] = [
 
 // Review phase: issue cards (Reviewer's concerns) – GM assigns to teams; add timeCost to team total.
 export const reviewIssueCards: Card[] = [
-  { id: 'rev-bleaching', name: 'Bleaching', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Bleaching_issue-R.png' },
-  { id: 'rev-cell-var', name: 'Cell variability', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CellVariability_issue-R.png' },
-  { id: 'rev-cross-em', name: 'Cross-emission', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CrossEm_issue-R.png' },
-  { id: 'rev-cross-ex', name: 'Cross-excitation', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CrossEx_issue-R.png' },
-  { id: 'rev-crowded', name: 'Crowded', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Crowded_issue-R.png' },
-  { id: 'rev-deconv-art', name: 'Deconvolution artefact', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DeconvArtefact_issue-R.png' },
-  { id: 'rev-diff-area', name: 'Different signal areas', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DiffArea_issue-R.png' },
-  { id: 'rev-intra-var', name: 'Intra-cellular variability', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_IntraCellVar_issue-R.png' },
-  { id: 'rev-low-snr', name: 'Low SNR', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_LowSNR_issue-R.png' },
-  { id: 'rev-oof-blur', name: 'Out-of-focus blur', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OOFBlur_issue-R.png' },
-  { id: 'rev-proj-art', name: 'Projection artefact', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_ProjArtefact_issue-R.png' },
-  { id: 'rev-ri-mismatch', name: 'RI mismatch', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_RIMismatch_issue-R.png' },
-  { id: 'rev-saturation', name: 'Saturation', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_saturation_issue-R.png' },
-  { id: 'rev-slow', name: 'Slow', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Slow_issue-R.png' },
-  { id: 'rev-threq', name: 'Threshold', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Threq_issue-R.png' }
+  { id: 'rev-bleaching', name: 'Bleaching', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Bleaching_issue-R.png' },
+  { id: 'rev-cell-var', name: 'Cell variability', description: '', category: 'review', timeCost: 5, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CellVariability_issue-R.png' },
+  { id: 'rev-cross-em', name: 'Cross-emission', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CrossEm_issue-R.png' },
+  { id: 'rev-cross-ex', name: 'Cross-excitation', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CrossEx_issue-R.png' },
+  { id: 'rev-crowded', name: 'Crowded', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Crowded_issue-R.png' },
+  { id: 'rev-deconv-art', name: 'Deconvolution artefact', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DeconvArtefact_issue-R.png' },
+  { id: 'rev-diff-area', name: 'Different signal areas', description: '', category: 'review', timeCost: 5, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DiffArea_issue-R.png' },
+  { id: 'rev-intra-var', name: 'Intra-cellular variability', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_IntraCellVar_issue-R.png' },
+  { id: 'rev-low-snr', name: 'Low SNR', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_LowSNR_issue-R.png' },
+  { id: 'rev-oof-blur', name: 'Out-of-focus blur', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OOFBlur_issue-R.png' },
+  { id: 'rev-proj-art', name: 'Projection artefact', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_ProjArtefact_issue-R.png' },
+  { id: 'rev-ri-mismatch', name: 'RI mismatch', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_RIMismatch_issue-R.png' },
+  { id: 'rev-saturation', name: 'Saturation', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_saturation_issue-R.png' },
+  { id: 'rev-slow', name: 'Slow', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Slow_issue-R.png' },
+  { id: 'rev-threq', name: 'Threshold', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Threq_issue-R.png' }
 ];
 
 // Review phase: details cards (Experimental details) – GM assigns to teams; add timeCost to team total. Team rolls dice (4–6) to use.
 export const reviewDetailsCards: Card[] = [
-  { id: 'rev-cell-hom', name: 'Cell homogeneity', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CellHom_details-R.png' },
-  { id: 'rev-dif-area', name: 'Different areas', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DifArea_details-R.png' },
-  { id: 'rev-live', name: 'Live', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Live_details-R.png' },
+  { id: 'rev-cell-hom', name: 'Cell homogeneity', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CellHom_details-R.png' },
+  { id: 'rev-dif-area', name: 'Different areas', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DifArea_details-R.png' },
+  { id: 'rev-live', name: 'Live', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Live_details-R.png' },
   { id: 'rev-opt-fluo', name: 'Optimized fluorophores', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptFluo_details-R.png' },
   { id: 'rev-opt-window', name: 'Optimized emission window', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptWindow_details-R.png' },
-  { id: 'rev-preserved', name: 'Preserved', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Preserved_details-R.png' },
-  { id: 'rev-range', name: 'Range', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_range_details-R.png' },
-  { id: 'rev-ri-match', name: 'RI match', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_RIMatch_details-R.png' },
-  { id: 'rev-sim-area', name: 'Similar areas', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SimArea_details-R.png' },
-  { id: 'rev-single-stain', name: 'Single stain', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SingleStain_details-R.png' }
+  { id: 'rev-preserved', name: 'Preserved', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Preserved_details-R.png' },
+  { id: 'rev-range', name: 'Range', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_range_details-R.png' },
+  { id: 'rev-ri-match', name: 'RI match', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_RIMatch_details-R.png' },
+  { id: 'rev-sim-area', name: 'Similar areas', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SimArea_details-R.png' },
+  { id: 'rev-sim-area', name: 'Optimized deconvolution', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_template_details-R copy 2.png' },
+  { id: 'rev-single-stain', name: 'Single stain', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SingleStain_details-R.png' }
 ];
 
