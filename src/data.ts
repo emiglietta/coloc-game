@@ -535,7 +535,7 @@ export const reviewDetailsCards: Card[] = [
   { id: 'rev-range', name: 'Range', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_range_details-R.png' },
   { id: 'rev-ri-match', name: 'RI match', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_RIMatch_details-R.png' },
   { id: 'rev-sim-area', name: 'Similar areas', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SimArea_details-R.png' },
-  { id: 'rev-sim-area', name: 'Optimized deconvolution', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_template_details-R copy 2.png' },
+  { id: 'rev-sim-area', name: 'Optimized deconvolution', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptDeconvolution_details-R.png' },
   { id: 'rev-single-stain', name: 'Single stain', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SingleStain_details-R.png' }
 ];
 
