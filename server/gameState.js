@@ -5,12 +5,23 @@
 
 const genId = () => crypto.randomUUID();
 
+const TILING_CARD_ID = 'img-tiling';
+const PROJECTIONS_CARD_ID = 'ana-projections';
+
 function calcTimeCost(team) {
-  const plan = [
-    ...team.selectedCards.acquisition,
-    ...team.selectedCards.analysis,
-    ...team.selectedCards.details
-  ].reduce((sum, c) => sum + c.timeCost, 0);
+  const acqRaw = team.selectedCards.acquisition.reduce((sum, c) => sum + c.timeCost, 0);
+  const acqEffective = team.selectedCards.acquisition.some((c) => c.id === TILING_CARD_ID)
+    ? acqRaw * 4
+    : acqRaw;
+
+  const analysisRaw = team.selectedCards.analysis.reduce((sum, c) => sum + c.timeCost, 0);
+  const analysisEffective = team.selectedCards.analysis.some((c) => c.id === PROJECTIONS_CARD_ID)
+    ? Math.round(analysisRaw / 4)
+    : analysisRaw;
+
+  const detailsPlan = team.selectedCards.details.reduce((sum, c) => sum + c.timeCost, 0);
+  const plan = acqEffective + analysisEffective + detailsPlan;
+
   const concerns = (team.reviewOutcome?.assignedConcerns || []).reduce((sum, c) => sum + c.timeCost, 0);
   const details = (team.reviewOutcome?.assignedDetails || []).reduce((sum, c) => sum + c.timeCost, 0);
   return plan + concerns + details;
