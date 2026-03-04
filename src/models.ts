@@ -21,6 +21,10 @@ export interface Session {
     gameMode: GameMode;
     /** When true (default), participants cannot switch to GM view. */
     blockParticipantsFromGM?: boolean;
+    /** When true (default), play countdown sounds (tick in last 10s, end sound at 0). */
+    countdownSoundEnabled?: boolean;
+    /** End sound type: 'alarm' (beep beep) or 'bomb' (explosion). Default 'alarm'. */
+    countdownSoundType?: 'alarm' | 'bomb';
   };
   currentPhase: SessionStatus;
   phaseEndTime: number | null;

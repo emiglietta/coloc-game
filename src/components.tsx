@@ -3,6 +3,7 @@ import { useGameStore, availableCards } from './store';
 import { Card, SessionStatus } from './models';
 import { experiments, reviewIssueCards, reviewDetailsCards } from './data';
 import { assetPath } from './assetPath';
+import { startTickLoop, stopTickLoop, playAlarmEnd, playBombEnd } from './countdownSounds';
 
 const phaseLabel: Record<SessionStatus, string> = {
   setup: 'Setup',
@@ -14,13 +15,26 @@ const phaseLabel: Record<SessionStatus, string> = {
 };
 
 /** Countdown from phaseEndTime; red when <= 2 minutes. Updates every second. */
-function PhaseTimer({ session }: { session: { phaseEndTime: number | null; currentPhase: SessionStatus } }) {
+function PhaseTimer({
+  session
+}: {
+  session: {
+    phaseEndTime: number | null;
+    currentPhase: SessionStatus;
+    settings?: { countdownSoundEnabled?: boolean; countdownSoundType?: 'alarm' | 'bomb' };
+  };
+}) {
   const [remainingSeconds, setRemainingSeconds] = React.useState<number | null>(null);
+  const endSoundPlayedRef = React.useRef(false);
+  const soundEnabled = (session.settings?.countdownSoundEnabled ?? true);
+  const soundType = session.settings?.countdownSoundType ?? 'alarm';
 
   React.useEffect(() => {
     if (session.phaseEndTime == null) {
       setRemainingSeconds(null);
-      return;
+      endSoundPlayedRef.current = false;
+      stopTickLoop();
+      return () => {};
     }
     const tick = () => {
       const sec = Math.max(0, Math.floor((session.phaseEndTime! - Date.now()) / 1000));
@@ -28,19 +42,45 @@ function PhaseTimer({ session }: { session: { phaseEndTime: number | null; curre
     };
     tick();
     const id = setInterval(tick, 1000);
-    return () => clearInterval(id);
+    return () => {
+      clearInterval(id);
+      stopTickLoop();
+    };
   }, [session.phaseEndTime]);
+
+  React.useEffect(() => {
+    if (remainingSeconds == null || !soundEnabled) return;
+    if (remainingSeconds === 0) {
+      stopTickLoop();
+      if (!endSoundPlayedRef.current) {
+        endSoundPlayedRef.current = true;
+        soundType === 'bomb' ? playBombEnd() : playAlarmEnd();
+      }
+    } else {
+      endSoundPlayedRef.current = false;
+      if (remainingSeconds >= 1 && remainingSeconds <= 10) {
+        startTickLoop();
+      } else {
+        stopTickLoop();
+      }
+    }
+  }, [remainingSeconds, soundEnabled, soundType]);
 
   if (remainingSeconds == null || session.phaseEndTime == null) return null;
 
   const m = Math.floor(remainingSeconds / 60);
   const s = remainingSeconds % 60;
-  const isLow = remainingSeconds <= 120; // 2 minutes
+  const isLow = remainingSeconds <= 60; // 1 minute
+  const isCritical = remainingSeconds <= 10; // last 10 seconds – flash red
 
   return (
     <div
       className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 font-mono text-xl tabular-nums ${
-        isLow ? 'border-red-500/80 bg-red-950/40 text-red-200' : 'border-slate-600 bg-slate-800/60 text-slate-100'
+        isCritical
+          ? 'animate-flash-red border-red-500 bg-red-600/50 text-red-100'
+          : isLow
+            ? 'border-red-500/80 bg-red-950/40 text-red-200'
+            : 'border-slate-600 bg-slate-800/60 text-slate-100'
       }`}
       title="Phase time remaining"
     >
@@ -144,7 +184,9 @@ export function GMDashboard() {
     gmRemoveCardFromTeam,
     adjustPhaseTimer,
     setShowTimerToParticipants,
-    setBlockParticipantsFromGM
+    setBlockParticipantsFromGM,
+    setCountdownSoundEnabled,
+    setCountdownSoundType
   } = useGameStore();
   const [expandedTeamCards, setExpandedTeamCards] = React.useState<Record<string, boolean>>({});
   const session = currentSessionId ? sessions[currentSessionId] : null;
@@ -325,6 +367,28 @@ export function GMDashboard() {
               />
               Block participants from GM access
             </label>
+            <label className="flex items-center gap-2 text-xs text-slate-200" title="Tick in last 10s, end sound at 0:00">
+              <input
+                type="checkbox"
+                checked={(session.settings as { countdownSoundEnabled?: boolean })?.countdownSoundEnabled !== false}
+                onChange={(e) => setCountdownSoundEnabled(session.id, e.target.checked)}
+                className="h-3 w-3 rounded border-slate-600 bg-slate-900"
+              />
+              Countdown sounds
+            </label>
+            {(session.settings as { countdownSoundEnabled?: boolean })?.countdownSoundEnabled !== false && (
+              <label className="flex items-center gap-2 text-xs text-slate-200">
+                <span>End sound:</span>
+                <select
+                  value={(session.settings as { countdownSoundType?: string })?.countdownSoundType ?? 'alarm'}
+                  onChange={(e) => setCountdownSoundType(session.id, e.target.value as 'alarm' | 'bomb')}
+                  className="rounded border border-slate-600 bg-slate-900 px-1.5 py-0.5 text-[11px]"
+                >
+                  <option value="alarm">Alarm (beep beep)</option>
+                  <option value="bomb">Bomb (explosion)</option>
+                </select>
+              </label>
+            )}
           </div>
           <div className="flex gap-2">
             <button

@@ -39,6 +39,8 @@ export interface GameState {
   adjustPhaseTimer(sessionId: string, deltaMinutes: number): void;
   setShowTimerToParticipants(sessionId: string, show: boolean): void;
   setBlockParticipantsFromGM(sessionId: string, block: boolean): void;
+  setCountdownSoundEnabled(sessionId: string, enabled: boolean): void;
+  setCountdownSoundType(sessionId: string, type: 'alarm' | 'bomb'): void;
   clearJoinError(): void;
   joinExistingTeam(sessionCode: string, teamId: string): boolean;
   joinSessionAsGM(gmCode: string): boolean;
@@ -123,7 +125,13 @@ export const useGameStore = create<GameState>((set, get) => ({
       gmCode,
       sessionCode,
       status: 'setup',
-      settings: { ...settings, teamFormationTime: teamFormationMinutes, blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true },
+      settings: {
+        ...settings,
+        teamFormationTime: teamFormationMinutes,
+        blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true,
+        countdownSoundEnabled: settings.countdownSoundEnabled ?? true,
+        countdownSoundType: settings.countdownSoundType ?? 'alarm'
+      },
       currentPhase: 'team-formation',
       phaseEndTime: Date.now() + teamFormationMinutes * 60 * 1000,
       showTimerToParticipants: true,
@@ -303,6 +311,44 @@ export const useGameStore = create<GameState>((set, get) => ({
       const updated: Session = {
         ...session,
         settings: { ...session.settings, blockParticipantsFromGM: block }
+      };
+      return {
+        sessions: { ...state.sessions, [sessionId]: updated }
+      };
+    });
+  },
+
+  setCountdownSoundEnabled: (sessionId, enabled) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'setCountdownSoundEnabled', payload: { sessionId, enabled } });
+      return;
+    }
+    set((state) => {
+      const session = state.sessions[sessionId];
+      if (!session) return state;
+      const updated: Session = {
+        ...session,
+        settings: { ...session.settings, countdownSoundEnabled: enabled }
+      };
+      return {
+        sessions: { ...state.sessions, [sessionId]: updated }
+      };
+    });
+  },
+
+  setCountdownSoundType: (sessionId, type) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'setCountdownSoundType', payload: { sessionId, type } });
+      return;
+    }
+    set((state) => {
+      const session = state.sessions[sessionId];
+      if (!session) return state;
+      const updated: Session = {
+        ...session,
+        settings: { ...session.settings, countdownSoundType: type }
       };
       return {
         sessions: { ...state.sessions, [sessionId]: updated }

@@ -60,7 +60,13 @@ export function createSession(state, { settings }) {
     gmCode,
     sessionCode,
     status: 'setup',
-    settings: { ...settings, teamFormationTime: teamFormationMinutes, blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true },
+    settings: {
+      ...settings,
+      teamFormationTime: teamFormationMinutes,
+      blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true,
+      countdownSoundEnabled: settings.countdownSoundEnabled ?? true,
+      countdownSoundType: settings.countdownSoundType ?? 'alarm'
+    },
     currentPhase: 'team-formation',
     phaseEndTime: Date.now() + teamFormationMinutes * 60 * 1000,
     showTimerToParticipants: true,
@@ -185,6 +191,30 @@ export function setBlockParticipantsFromGM(state, { sessionId, block }) {
   const updated = {
     ...session,
     settings: { ...session.settings, blockParticipantsFromGM: block }
+  };
+  return {
+    state: { sessions: { ...state.sessions, [sessionId]: updated }, teams: state.teams }
+  };
+}
+
+export function setCountdownSoundEnabled(state, { sessionId, enabled }) {
+  const session = state.sessions[sessionId];
+  if (!session) return { state };
+  const updated = {
+    ...session,
+    settings: { ...session.settings, countdownSoundEnabled: enabled }
+  };
+  return {
+    state: { sessions: { ...state.sessions, [sessionId]: updated }, teams: state.teams }
+  };
+}
+
+export function setCountdownSoundType(state, { sessionId, type }) {
+  const session = state.sessions[sessionId];
+  if (!session) return { state };
+  const updated = {
+    ...session,
+    settings: { ...session.settings, countdownSoundType: type }
   };
   return {
     state: { sessions: { ...state.sessions, [sessionId]: updated }, teams: state.teams }
@@ -367,6 +397,8 @@ const actions = {
   adjustPhaseTimer,
   setShowTimerToParticipants,
   setBlockParticipantsFromGM,
+  setCountdownSoundEnabled,
+  setCountdownSoundType,
   selectCard,
   deselectCard,
   assignReviewerConcern,
