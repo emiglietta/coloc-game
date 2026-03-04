@@ -19,6 +19,8 @@ export interface Session {
     acquisitionTime: number;
     analysisTime: number;
     gameMode: GameMode;
+    /** When true (default), participants cannot switch to GM view. */
+    blockParticipantsFromGM?: boolean;
   };
   currentPhase: SessionStatus;
   phaseEndTime: number | null;
@@ -88,6 +90,8 @@ export interface Team {
     /** Details cards assigned by GM (Experimental details); add timeCost to team total. */
     assignedDetails: Card[];
   };
+  /** Dice roll result (1–6) per assigned details card. 1–3 = failed (can't use, add timeCost). 4–6 = success. */
+  detailsRollResults?: Record<string, number>;
   /** Card IDs in selectedCards that were added by the GM during review (show magenta outline). */
   gmAddedCardIds?: string[];
 }

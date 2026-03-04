@@ -33,10 +33,12 @@ export interface GameState {
   unassignReviewerConcern(teamId: string, cardId: string): void;
   assignReviewerDetail(teamId: string, card: Card): void;
   unassignReviewerDetail(teamId: string, cardId: string): void;
+  setDetailsCardRoll(teamId: string, cardId: string, roll: number): void;
   gmAddCardToTeam(teamId: string, phase: 'acquisition' | 'analysis', card: Card): void;
   gmRemoveCardFromTeam(teamId: string, phase: 'acquisition' | 'analysis', cardId: string): void;
   adjustPhaseTimer(sessionId: string, deltaMinutes: number): void;
   setShowTimerToParticipants(sessionId: string, show: boolean): void;
+  setBlockParticipantsFromGM(sessionId: string, block: boolean): void;
   clearJoinError(): void;
   joinExistingTeam(sessionCode: string, teamId: string): boolean;
   joinSessionAsGM(gmCode: string): boolean;
@@ -62,7 +64,11 @@ const calcTimeCost = (team: Team): number => {
   const plan = acqEffective + analysisEffective + detailsPlan;
 
   const concerns = (team.reviewOutcome.assignedConcerns || []).reduce((sum, c) => sum + c.timeCost, 0);
-  const details = (team.reviewOutcome.assignedDetails || []).reduce((sum, c) => sum + c.timeCost, 0);
+  const details = (team.reviewOutcome.assignedDetails || []).reduce((sum, c) => {
+    const roll = team.detailsRollResults?.[c.id];
+    if (roll !== undefined && roll >= 1 && roll <= 3) return sum + c.timeCost;
+    return sum;
+  }, 0);
   return plan + concerns + details;
 };
 
@@ -117,7 +123,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       gmCode,
       sessionCode,
       status: 'setup',
-      settings: { ...settings, teamFormationTime: teamFormationMinutes },
+      settings: { ...settings, teamFormationTime: teamFormationMinutes, blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true },
       currentPhase: 'team-formation',
       phaseEndTime: Date.now() + teamFormationMinutes * 60 * 1000,
       showTimerToParticipants: true,
@@ -279,6 +285,25 @@ export const useGameStore = create<GameState>((set, get) => ({
       const session = state.sessions[sessionId];
       if (!session) return state;
       const updated: Session = { ...session, showTimerToParticipants: show };
+      return {
+        sessions: { ...state.sessions, [sessionId]: updated }
+      };
+    });
+  },
+
+  setBlockParticipantsFromGM: (sessionId, block) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'setBlockParticipantsFromGM', payload: { sessionId, block } });
+      return;
+    }
+    set((state) => {
+      const session = state.sessions[sessionId];
+      if (!session) return state;
+      const updated: Session = {
+        ...session,
+        settings: { ...session.settings, blockParticipantsFromGM: block }
+      };
       return {
         sessions: { ...state.sessions, [sessionId]: updated }
       };
@@ -457,10 +482,31 @@ export const useGameStore = create<GameState>((set, get) => ({
       const team = state.teams[teamId];
       if (!team) return state;
       const details = (team.reviewOutcome.assignedDetails || []).filter((c) => c.id !== cardId);
+      const rollResults = { ...(team.detailsRollResults || {}) };
+      delete rollResults[cardId];
       const updated: Team = {
         ...team,
-        reviewOutcome: { ...team.reviewOutcome, assignedDetails: details }
+        reviewOutcome: { ...team.reviewOutcome, assignedDetails: details },
+        detailsRollResults: rollResults
       };
+      updated.totalTimeCost = calcTimeCost(updated);
+      return { teams: { ...state.teams, [teamId]: updated } };
+    });
+  },
+
+  setDetailsCardRoll: (teamId, cardId, roll) => {
+    const { socket } = get();
+    if (socket?.connected) {
+      socket.emit('action', { type: 'setDetailsCardRoll', payload: { teamId, cardId, roll } });
+      return;
+    }
+    set((state) => {
+      const team = state.teams[teamId];
+      if (!team) return state;
+      const assigned = (team.reviewOutcome.assignedDetails || []).some((c) => c.id === cardId);
+      if (!assigned) return state;
+      const rollResults = { ...(team.detailsRollResults || {}), [cardId]: roll };
+      const updated: Team = { ...team, detailsRollResults: rollResults };
       updated.totalTimeCost = calcTimeCost(updated);
       return { teams: { ...state.teams, [teamId]: updated } };
     });

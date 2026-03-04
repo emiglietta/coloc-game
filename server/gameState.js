@@ -23,7 +23,11 @@ function calcTimeCost(team) {
   const plan = acqEffective + analysisEffective + detailsPlan;
 
   const concerns = (team.reviewOutcome?.assignedConcerns || []).reduce((sum, c) => sum + c.timeCost, 0);
-  const details = (team.reviewOutcome?.assignedDetails || []).reduce((sum, c) => sum + c.timeCost, 0);
+  const details = (team.reviewOutcome?.assignedDetails || []).reduce((sum, c) => {
+    const roll = team.detailsRollResults?.[c.id];
+    if (roll !== undefined && roll >= 1 && roll <= 3) return sum + c.timeCost;
+    return sum;
+  }, 0);
   return plan + concerns + details;
 }
 
@@ -56,7 +60,7 @@ export function createSession(state, { settings }) {
     gmCode,
     sessionCode,
     status: 'setup',
-    settings: { ...settings, teamFormationTime: teamFormationMinutes },
+    settings: { ...settings, teamFormationTime: teamFormationMinutes, blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true },
     currentPhase: 'team-formation',
     phaseEndTime: Date.now() + teamFormationMinutes * 60 * 1000,
     showTimerToParticipants: true,
@@ -175,6 +179,18 @@ export function setShowTimerToParticipants(state, { sessionId, show }) {
   };
 }
 
+export function setBlockParticipantsFromGM(state, { sessionId, block }) {
+  const session = state.sessions[sessionId];
+  if (!session) return { state };
+  const updated = {
+    ...session,
+    settings: { ...session.settings, blockParticipantsFromGM: block }
+  };
+  return {
+    state: { sessions: { ...state.sessions, [sessionId]: updated }, teams: state.teams }
+  };
+}
+
 export function selectCard(state, { teamId, phase, card }) {
   const team = state.teams[teamId];
   if (!team) return { state };
@@ -278,10 +294,26 @@ export function unassignReviewerDetail(state, { teamId, cardId }) {
   const team = state.teams[teamId];
   if (!team) return { state };
   const details = (team.reviewOutcome?.assignedDetails || []).filter((c) => c.id !== cardId);
+  const rollResults = { ...(team.detailsRollResults || {}) };
+  delete rollResults[cardId];
   const updated = {
     ...team,
-    reviewOutcome: { ...team.reviewOutcome, assignedDetails: details }
+    reviewOutcome: { ...team.reviewOutcome, assignedDetails: details },
+    detailsRollResults: rollResults
   };
+  updated.totalTimeCost = calcTimeCost(updated);
+  return {
+    state: { sessions: state.sessions, teams: { ...state.teams, [teamId]: updated } }
+  };
+}
+
+export function setDetailsCardRoll(state, { teamId, cardId, roll }) {
+  const team = state.teams[teamId];
+  if (!team) return { state };
+  const assigned = (team.reviewOutcome?.assignedDetails || []).some((c) => c.id === cardId);
+  if (!assigned) return { state };
+  const rollResults = { ...(team.detailsRollResults || {}), [cardId]: roll };
+  const updated = { ...team, detailsRollResults: rollResults };
   updated.totalTimeCost = calcTimeCost(updated);
   return {
     state: { sessions: state.sessions, teams: { ...state.teams, [teamId]: updated } }
@@ -334,12 +366,14 @@ const actions = {
   previousPhase,
   adjustPhaseTimer,
   setShowTimerToParticipants,
+  setBlockParticipantsFromGM,
   selectCard,
   deselectCard,
   assignReviewerConcern,
   unassignReviewerConcern,
   assignReviewerDetail,
   unassignReviewerDetail,
+  setDetailsCardRoll,
   gmAddCardToTeam,
   gmRemoveCardFromTeam
 };

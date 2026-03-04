@@ -94,16 +94,19 @@ function CardPill({ card, onClick, selected }: { card: Card; onClick?: () => voi
 }
 
 export function RoleSelector() {
-  const { role, setRole, currentTeamId } = useGameStore();
+  const { role, setRole, currentTeamId, currentSessionId, sessions } = useGameStore();
+  const session = currentSessionId ? sessions[currentSessionId] : null;
+  const blockParticipantsFromGM = (session as { settings?: { blockParticipantsFromGM?: boolean } })?.settings?.blockParticipantsFromGM ?? true;
   const isParticipant = role === 'team' && currentTeamId != null;
+  const isBlocked = isParticipant && blockParticipantsFromGM;
   return (
     <div className="mb-6 flex gap-3">
       <button
         type="button"
-        className={`card flex-1 text-center ${role === 'gm' ? 'ring-2 ring-sky-300' : ''} ${isParticipant ? 'pointer-events-none opacity-50' : ''}`}
-        onClick={() => !isParticipant && setRole('gm')}
-        disabled={isParticipant}
-        title={isParticipant ? 'Joined as participant—GM access blocked' : ''}
+        className={`card flex-1 text-center ${role === 'gm' ? 'ring-2 ring-sky-300' : ''} ${isBlocked ? 'pointer-events-none opacity-50' : ''}`}
+        onClick={() => !isBlocked && setRole('gm')}
+        disabled={isBlocked}
+        title={isBlocked ? 'Joined as participant—GM access blocked by session setting' : ''}
       >
         <h2 className="text-lg font-semibold">Game Master</h2>
         <p className="mt-1 text-sm text-slate-100/80">Create and control sessions.</p>
@@ -140,7 +143,8 @@ export function GMDashboard() {
     gmAddCardToTeam,
     gmRemoveCardFromTeam,
     adjustPhaseTimer,
-    setShowTimerToParticipants
+    setShowTimerToParticipants,
+    setBlockParticipantsFromGM
   } = useGameStore();
   const [expandedTeamCards, setExpandedTeamCards] = React.useState<Record<string, boolean>>({});
   const session = currentSessionId ? sessions[currentSessionId] : null;
@@ -311,6 +315,15 @@ export function GMDashboard() {
                 className="h-3 w-3 rounded border-slate-600 bg-slate-900"
               />
               Show timer to participants
+            </label>
+            <label className="flex items-center gap-2 text-xs text-slate-200" title="When on, participants cannot switch to GM view">
+              <input
+                type="checkbox"
+                checked={(session.settings as { blockParticipantsFromGM?: boolean })?.blockParticipantsFromGM !== false}
+                onChange={(e) => setBlockParticipantsFromGM(session.id, e.target.checked)}
+                className="h-3 w-3 rounded border-slate-600 bg-slate-900"
+              />
+              Block participants from GM access
             </label>
           </div>
           <div className="flex gap-2">
@@ -587,7 +600,7 @@ export function GMDashboard() {
 }
 
 export function TeamView() {
-  const { currentSessionId, sessions, currentTeamId, joinSessionAsTeam, joinExistingTeam, teams, selectCard, deselectCard, setTeamExperiment, joinError, isJoining, socket } =
+  const { currentSessionId, sessions, currentTeamId, joinSessionAsTeam, joinExistingTeam, teams, selectCard, deselectCard, setTeamExperiment, setDetailsCardRoll, joinError, isJoining, socket } =
     useGameStore();
   const [sessionCodeInput, setSessionCodeInput] = React.useState('');
   const [teamName, setTeamName] = React.useState('');
@@ -921,7 +934,7 @@ export function TeamView() {
                   <div className="flex flex-wrap gap-2">
                     {(team.reviewOutcome?.assignedConcerns || []).map((c) => (
                       <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
-                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-60 w-60 md:h-72 md:w-72 object-contain" />
+                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-[180px] w-[180px] md:h-[216px] md:w-[216px] object-contain" />
                         <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
                           {Array.from({ length: c.timeCost }).map((_, i) => (
                             <span key={i}>⏰</span>
@@ -934,23 +947,35 @@ export function TeamView() {
               </div>
               <div className="flex flex-col gap-2">
                 <h4 className="text-xs font-semibold text-slate-200">Experimental details</h4>
-                <div className="flex flex-wrap items-start gap-2">
+                <div className="flex flex-col gap-3">
                   {(team.reviewOutcome?.assignedDetails || []).length === 0 ? (
                     <p className="text-xs text-slate-500">No details assigned yet.</p>
                   ) : (
-                    (team.reviewOutcome?.assignedDetails || []).map((c) => (
-                      <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
-                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-60 w-60 md:h-72 md:w-72 object-contain" />
-                        <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
-                          {Array.from({ length: c.timeCost }).map((_, i) => (
-                            <span key={i}>⏰</span>
-                          ))}
-                        </span>
-                      </div>
-                    ))
+                    (team.reviewOutcome?.assignedDetails || []).map((c) => {
+                      const roll = team.detailsRollResults?.[c.id];
+                      const failed = roll !== undefined && roll >= 1 && roll <= 3;
+                      return (
+                        <div key={c.id} className="flex flex-wrap items-center gap-3">
+                          <div
+                            className={`rounded border p-1 transition-opacity ${failed ? 'border-slate-600 bg-slate-800/50 opacity-50 grayscale' : 'border-slate-600 bg-slate-800/50'}`}
+                            title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})${failed ? ' — roll failed, cannot use' : ''}`}
+                          >
+                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-[180px] w-[180px] md:h-[216px] md:w-[216px] object-contain" />
+                            <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
+                              {Array.from({ length: c.timeCost }).map((_, i) => (
+                                <span key={i}>⏰</span>
+                              ))}
+                            </span>
+                          </div>
+                          <DetailsCardDiceRoller
+                            roll={roll}
+                            onRollComplete={(value) => setDetailsCardRoll(team.id, c.id, value)}
+                          />
+                        </div>
+                      );
+                    })
                   )}
                 </div>
-                {(team.reviewOutcome?.assignedDetails || []).length > 0 && <DiceRoller />}
               </div>
             </div>
           </div>
@@ -1097,25 +1122,16 @@ function ExperimentDiceRoller({
   );
 }
 
-/** Single d6 for Experimental details: 4–6 = can use. */
-function DiceRoller() {
-  const [roll, setRoll] = React.useState<number | null>(null);
-  const success = roll !== null && roll >= 4;
+/** Single d6 for one Experimental details card: 4–6 = can use, 1–3 = cannot use (gray out card). */
+function DetailsCardDiceRoller({ roll, onRollComplete }: { roll: number | undefined; onRollComplete: (value: number) => void }) {
   return (
-    <div className="mt-2 rounded-lg border border-slate-700 bg-slate-800/50 p-3">
-      <p className="text-xs font-semibold text-slate-200">Dice roll for Experimental details</p>
-      <p className="mt-1 text-[11px] text-slate-400">Roll 4–6 to use a details card.</p>
-      <div className="mt-2 flex items-center gap-2">
-        <AnimatedDice
-          onRollStart={() => setRoll(null)}
-          onComplete={(value) => setRoll(value)}
-        />
-        {roll !== null && (
-          <span className={`text-lg font-bold ${success ? 'text-emerald-400' : 'text-red-400'}`}>
-            {roll} {success ? '✓ Can use' : '✗ Cannot use'}
-          </span>
-        )}
-      </div>
+    <div className="flex items-center gap-2 rounded-lg border border-slate-700 bg-slate-800/50 p-3">
+      <AnimatedDice onComplete={onRollComplete} />
+      {roll !== undefined && (
+        <span className={`text-sm font-bold ${roll >= 4 ? 'text-emerald-400' : 'text-red-400'}`}>
+          {roll} {roll >= 4 ? '✓ Can use' : '✗ Cannot use'}
+        </span>
+      )}
     </div>
   );
 }
