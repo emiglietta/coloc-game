@@ -485,49 +485,59 @@ export function GMDashboard() {
                 </div>
               </div>
               {session.currentPhase === 'review' && (
-                <div className="mt-2 flex flex-wrap gap-3">
+                <div className="mt-2 flex flex-wrap gap-4">
                   <div>
-                    <p className="mb-1 text-[11px] font-medium text-slate-300">Add acquisition card</p>
-                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                      {acquisitionCardPool
-                        .filter((c) => !team.selectedCards.acquisition.some((x) => x.id === c.id))
-                        .map((c) => (
+                    <p className="mb-1 text-[11px] font-medium text-slate-300">Acquisition cards (click to add/remove)</p>
+                    <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                      {acquisitionCardPool.map((c) => {
+                        const selected = team.selectedCards.acquisition.some((x) => x.id === c.id);
+                        const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
+                        return (
                           <button
                             key={c.id}
                             type="button"
-                            onClick={() => gmAddCardToTeam(team.id, 'acquisition', c)}
-                            title={`${c.name} (+${c.timeCost}⏰)`}
-                            className="flex flex-col items-center rounded border border-slate-600 bg-slate-800/50 p-1 hover:border-sky-500 min-w-0 w-16"
+                            onClick={() =>
+                              selected
+                                ? gmRemoveCardFromTeam(team.id, 'acquisition', c.id)
+                                : gmAddCardToTeam(team.id, 'acquisition', c)
+                            }
+                            title={`${c.name} (+${c.timeCost}⏰) — ${selected ? 'click to remove' : 'click to add'}`}
+                            className={`relative flex flex-col items-center rounded border p-1 min-w-0 w-16 ${selected ? 'border-sky-400 bg-sky-500/20 ring-2 ring-sky-400/50' : 'border-slate-600 bg-slate-800/50 hover:border-slate-500 opacity-70'}`}
                           >
+                            {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">GM</span>}
                             <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
                             <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
+                            {selected && <span className="mt-0.5 text-[8px] text-sky-300">✓</span>}
                           </button>
-                        ))}
-                      {acquisitionCardPool.filter((c) => !team.selectedCards.acquisition.some((x) => x.id === c.id)).length === 0 && (
-                        <span className="text-[10px] text-slate-500">All selected</span>
-                      )}
+                        );
+                      })}
                     </div>
                   </div>
                   <div>
-                    <p className="mb-1 text-[11px] font-medium text-slate-300">Add analysis card</p>
-                    <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                      {analysisCardPool
-                        .filter((c) => !team.selectedCards.analysis.some((x) => x.id === c.id))
-                        .map((c) => (
+                    <p className="mb-1 text-[11px] font-medium text-slate-300">Analysis cards (click to add/remove)</p>
+                    <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto">
+                      {analysisCardPool.map((c) => {
+                        const selected = team.selectedCards.analysis.some((x) => x.id === c.id);
+                        const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
+                        return (
                           <button
                             key={c.id}
                             type="button"
-                            onClick={() => gmAddCardToTeam(team.id, 'analysis', c)}
-                            title={`${c.name} (+${c.timeCost}⏰)`}
-                            className="flex flex-col items-center rounded border border-slate-600 bg-slate-800/50 p-1 hover:border-sky-500 min-w-0 w-16"
+                            onClick={() =>
+                              selected
+                                ? gmRemoveCardFromTeam(team.id, 'analysis', c.id)
+                                : gmAddCardToTeam(team.id, 'analysis', c)
+                            }
+                            title={`${c.name} (+${c.timeCost}⏰) — ${selected ? 'click to remove' : 'click to add'}`}
+                            className={`relative flex flex-col items-center rounded border p-1 min-w-0 w-16 ${selected ? 'border-emerald-400 bg-emerald-500/20 ring-2 ring-emerald-400/50' : 'border-slate-600 bg-slate-800/50 hover:border-slate-500 opacity-70'}`}
                           >
+                            {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">GM</span>}
                             <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
                             <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
+                            {selected && <span className="mt-0.5 text-[8px] text-emerald-300">✓</span>}
                           </button>
-                        ))}
-                      {analysisCardPool.filter((c) => !team.selectedCards.analysis.some((x) => x.id === c.id)).length === 0 && (
-                        <span className="text-[10px] text-slate-500">All selected</span>
-                      )}
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
