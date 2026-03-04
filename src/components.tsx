@@ -899,42 +899,54 @@ export function TeamView() {
 
       {isReviewPhase && (
           <div className="card space-y-4">
-            <h3 className="text-sm font-semibold">Review &amp; Defense</h3>
+            <h3 className="text-[21px] font-semibold">Review &amp; Defense</h3>
             <div>
-              <h4 className="mb-2 text-xs font-semibold text-slate-200">Your selected cards</h4>
-              <div className="flex flex-nowrap gap-2 overflow-x-auto pb-2">
-                {[...team.selectedCards.acquisition, ...team.selectedCards.analysis].map((c) => {
-                  const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
-                  return (
-                    <div
-                      key={c.id}
-                      className={`flex flex-col items-center flex-shrink-0 rounded border p-1 ${isGmAdded ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/50' : 'border-slate-600 bg-slate-800/50'}`}
-                      title={`${c.name}${isGmAdded ? ' (added by GM)' : ''} (+${c.timeCost} ⏰)`}
-                    >
-                      <img src={assetPath(c.iconPath)} alt={c.name} className="h-16 w-16 md:h-20 md:w-20 object-contain" />
-                      <span className="mt-0.5 flex gap-0.5 text-[10px]">
-                        {Array.from({ length: c.timeCost }).map((_, i) => (
-                          <span key={i}>⏰</span>
-                        ))}
-                      </span>
+              <h4 className="mb-2 text-[18px] font-semibold text-slate-200">Your selected cards</h4>
+              <div className="flex flex-col gap-3">
+                {[
+                  { label: 'Microscope settings', cards: team.selectedCards.acquisition.filter((c) => c.id.startsWith('mic-')), borderColor: 'border-sky-500/50' },
+                  { label: 'Image acquisition settings', cards: team.selectedCards.acquisition.filter((c) => c.id.startsWith('img-')), borderColor: 'border-pink-500/50' },
+                  { label: 'Analysis', cards: team.selectedCards.analysis, borderColor: 'border-emerald-500/50' }
+                ].map(({ label, cards, borderColor }) => (
+                  <div key={label}>
+                    <p className="mb-1 text-[15px] font-medium text-slate-400">{label}</p>
+                    <div className="flex flex-wrap gap-2">
+                      {cards.length === 0 ? (
+                        <p className="text-[18px] text-slate-500 py-2">None selected</p>
+                      ) : (
+                        cards.map((c) => {
+                          const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
+                          return (
+                            <div
+                              key={c.id}
+                              className={`flex flex-col items-center flex-shrink-0 rounded border p-1 ${isGmAdded ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/50' : `${borderColor} bg-slate-800/50`}`}
+                              title={`${c.name}${isGmAdded ? ' (added by GM)' : ''} (+${c.timeCost} ⏰)`}
+                            >
+                              <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
+                              <span className="mt-0.5 flex gap-0.5 text-[10px]">
+                                {Array.from({ length: c.timeCost }).map((_, i) => (
+                                  <span key={i}>⏰</span>
+                                ))}
+                              </span>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
-                  );
-                })}
-                {team.selectedCards.acquisition.length === 0 && team.selectedCards.analysis.length === 0 && (
-                  <p className="text-xs text-slate-500 py-4">No cards selected</p>
-                )}
+                  </div>
+                ))}
               </div>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
-                <h4 className="mb-2 text-xs font-semibold text-slate-200">Reviewer&apos;s concerns</h4>
+                <h4 className="mb-2 text-[18px] font-semibold text-slate-200">Reviewer&apos;s concerns</h4>
                 {(team.reviewOutcome?.assignedConcerns || []).length === 0 ? (
-                  <p className="text-xs text-slate-500">No concerns assigned yet.</p>
+                  <p className="text-[18px] text-slate-500">No concerns assigned yet.</p>
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {(team.reviewOutcome?.assignedConcerns || []).map((c) => (
                       <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
-                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-[180px] w-[180px] md:h-[216px] md:w-[216px] object-contain" />
+                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
                         <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
                           {Array.from({ length: c.timeCost }).map((_, i) => (
                             <span key={i}>⏰</span>
@@ -946,10 +958,10 @@ export function TeamView() {
                 )}
               </div>
               <div className="flex flex-col gap-2">
-                <h4 className="text-xs font-semibold text-slate-200">Experimental details</h4>
+                <h4 className="text-[18px] font-semibold text-slate-200">Experimental details</h4>
                 <div className="flex flex-col gap-3">
                   {(team.reviewOutcome?.assignedDetails || []).length === 0 ? (
-                    <p className="text-xs text-slate-500">No details assigned yet.</p>
+                    <p className="text-[18px] text-slate-500">No details assigned yet.</p>
                   ) : (
                     (team.reviewOutcome?.assignedDetails || []).map((c) => {
                       const roll = team.detailsRollResults?.[c.id];
@@ -960,7 +972,7 @@ export function TeamView() {
                             className={`rounded border p-1 transition-opacity ${failed ? 'border-slate-600 bg-slate-800/50 opacity-50 grayscale' : 'border-slate-600 bg-slate-800/50'}`}
                             title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})${failed ? ' — roll failed, cannot use' : ''}`}
                           >
-                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-[180px] w-[180px] md:h-[216px] md:w-[216px] object-contain" />
+                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
                             <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
                               {Array.from({ length: c.timeCost }).map((_, i) => (
                                 <span key={i}>⏰</span>
