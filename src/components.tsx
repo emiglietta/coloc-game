@@ -4,7 +4,8 @@ import { Card, SessionStatus } from './models';
 import { experiments, reviewIssueCards, reviewDetailsCards, acquisitionCardGroups, analysisCardGroups, acquisitionSectionConfig } from './data';
 import { assetPath } from './assetPath';
 import { startTickLoop, stopTickLoop, playAlarmEnd, playBombEnd } from './countdownSounds';
-import { Reviewer3GuidePanel } from './Reviewer3Guide';
+import { MetricsCheatsheetPanel } from './MetricsCheatsheetPanel';
+import { GMRightSidePanels } from './GMRightSidePanels';
 
 const phaseLabel: Record<SessionStatus, string> = {
   setup: 'Setup',
@@ -221,7 +222,7 @@ export function GMDashboard() {
     setCountdownSoundType
   } = useGameStore();
   const [expandedTeamCards, setExpandedTeamCards] = React.useState<Record<string, boolean>>({});
-  const [guideOpen, setGuideOpen] = React.useState(false);
+  const [rightPanelOpen, setRightPanelOpen] = React.useState<'guide' | 'cheatsheet' | null>(null);
   const session = currentSessionId ? sessions[currentSessionId] : null;
 
   const [numTeams, setNumTeams] = React.useState(4);
@@ -255,7 +256,7 @@ export function GMDashboard() {
   if (!session) {
     return (
       <div className="space-y-4 relative">
-        <Reviewer3GuidePanel isOpen={guideOpen} onClose={() => setGuideOpen(false)} onToggle={() => setGuideOpen((o) => !o)} />
+        <GMRightSidePanels openPanel={rightPanelOpen} onSetOpenPanel={setRightPanelOpen} />
         <div className="card">
           <h3 className="mb-3 text-sm font-semibold text-slate-200">Join as additional GM</h3>
           <p className="mb-2 text-xs text-slate-400">Have a GM code from another Game Master? Enter it to co-manage the session.</p>
@@ -348,7 +349,7 @@ export function GMDashboard() {
 
   return (
     <div className="space-y-4 relative">
-      <Reviewer3GuidePanel isOpen={guideOpen} onClose={() => setGuideOpen(false)} onToggle={() => setGuideOpen((o) => !o)} />
+      <GMRightSidePanels openPanel={rightPanelOpen} onSetOpenPanel={setRightPanelOpen} />
       <div className="card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Session {session.sessionCode}</h2>
@@ -718,6 +719,7 @@ export function TeamView() {
   const [postdoc, setPostdoc] = React.useState('');
   const [grad, setGrad] = React.useState('');
   const [localError, setLocalError] = React.useState<string | null>(null);
+  const [cheatsheetOpen, setCheatsheetOpen] = React.useState(false);
 
   const session = currentSessionId ? sessions[currentSessionId] : null;
   const team = currentTeamId ? teams[currentTeamId] : null;
@@ -896,6 +898,9 @@ export function TeamView() {
 
   return (
     <div className="space-y-4">
+      {session.currentPhase === 'analysis' && (
+        <MetricsCheatsheetPanel isOpen={cheatsheetOpen} onClose={() => setCheatsheetOpen(false)} onToggle={() => setCheatsheetOpen((o) => !o)} />
+      )}
       <div className="card flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold">{team.name}</h2>
