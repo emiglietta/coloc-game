@@ -1,4 +1,6 @@
 import React from 'react';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
 import { useGameStore, availableCards } from './store';
 import { Card, SessionStatus } from './models';
 import { experiments, reviewIssueCards, reviewDetailsCards, acquisitionCardGroups, analysisCardGroups, acquisitionSectionConfig } from './data';
@@ -229,6 +231,29 @@ export function GMDashboard() {
   } = useGameStore();
   const [expandedTeamCards, setExpandedTeamCards] = React.useState<Record<string, boolean>>({});
   const [rightPanelOpen, setRightPanelOpen] = React.useState<'guide' | 'cheatsheet' | null>(null);
+  const [shareModalOpen, setShareModalOpen] = React.useState(false);
+  const gmReportRef = React.useRef<HTMLDivElement>(null);
+
+  const SHARE_MESSAGE = (
+    <>
+      Share the results from your game{' '}
+      <a
+        href="https://github.com/BIOP/coLoc/issues/1"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-sky-400 underline hover:text-sky-300"
+      >
+        HERE
+      </a>{' '}
+      to add them to the Global Leaderboard.
+      <br />
+      You can also share the game report by email to:
+      <br />
+      <span className="underline">romain.guiet@epfl.ch</span>
+      <br />
+      Subject: coLoc game results
+    </>
+  );
   const session = currentSessionId ? sessions[currentSessionId] : null;
 
   const [numTeams, setNumTeams] = React.useState(4);
@@ -257,6 +282,92 @@ export function GMDashboard() {
       analysisTime: analysisTime,
       gameMode: mode
     });
+  };
+
+  const handleCreateGameReport = async () => {
+    const el = gmReportRef.current;
+    if (!el) return;
+    const sess = currentSessionId ? sessions[currentSessionId] : null;
+    const reportDate = new Date();
+    const pageEls = el.querySelectorAll('[data-report-page]');
+    if (pageEls.length === 0) return;
+    try {
+      const pdf = new jsPDF({ unit: 'mm', format: 'a4' });
+      const pdfW = pdf.internal.pageSize.getWidth();
+      const pdfH = pdf.internal.pageSize.getHeight();
+
+      const shareMsgTop = 15;
+      const shareMsgUrl = 'https://github.com/BIOP/coLoc/issues/1';
+
+      for (let i = 0; i < pageEls.length; i++) {
+        if (i > 0) pdf.addPage();
+        const canvas = await html2canvas(pageEls[i] as HTMLElement, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#0f172a'
+        });
+        const imgData = canvas.toDataURL('image/png');
+        const imgW = canvas.width;
+        const imgH = canvas.height;
+
+        let imgY = 0;
+        let imgHmm = pdfH;
+        if (i === 0) {
+          pdf.setFont('helvetica', 'bold');
+          pdf.setFontSize(12);
+          pdf.setTextColor(80, 150, 220);
+          let y = shareMsgTop;
+          pdf.text('Share the results from your game ', 14, y);
+          const xAfter = 14 + pdf.getTextWidth('Share the results from your game ');
+          const hereWidth = pdf.getTextWidth('HERE');
+          pdf.textWithLink('HERE', xAfter, y, { url: shareMsgUrl });
+          pdf.setDrawColor(80, 150, 220);
+          pdf.setLineWidth(0.3);
+          pdf.line(xAfter, y + 1.5, xAfter + hereWidth, y + 1.5);
+          const xAfterHere = xAfter + hereWidth;
+          pdf.text(' to add them to the Global Leaderboard.', xAfterHere, y);
+          y += 8;
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(12);
+          pdf.setTextColor(180, 180, 180);
+          pdf.text('You can also share the game report by email to: ', 14, y);
+          y += 6;
+          const email = 'romain.guiet@epfl.ch';
+          const emailX = 14;
+          const emailWidth = pdf.getTextWidth(email);
+          pdf.text(email, emailX, y);
+          pdf.setDrawColor(180, 180, 180);
+          pdf.line(emailX, y + 1.5, emailX + emailWidth, y + 1.5);
+          y += 6;
+          pdf.text('Subject: coLoc game results', 14, y);
+          imgY = y + 14;
+          imgHmm = pdfH - imgY - 12;
+        }
+
+        const ratio = Math.min(pdfW / imgW, imgHmm / imgH) * 0.95;
+        const w = imgW * ratio;
+        const h = imgH * ratio;
+        const imgX = (pdfW - w) / 2;
+        const imgYActual = i === 0 ? imgY : (pdfH - h) / 2;
+        pdf.addImage(imgData, 'PNG', imgX, imgYActual, w, h);
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(8);
+        pdf.setTextColor(100, 100, 100);
+        pdf.text(
+          `Report generated: ${reportDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}`,
+          14,
+          pdfH - 8
+        );
+      }
+
+      const filename = `coLoc-game-report-${sess?.sessionCode ?? 'session'}-${reportDate.toISOString().slice(0, 10)}.pdf`;
+      pdf.save(filename);
+      setShareModalOpen(true);
+    } catch (err) {
+      console.error('Failed to create game report:', err);
+    }
   };
 
   if (!session) {
@@ -355,7 +466,165 @@ export function GMDashboard() {
 
   return (
     <div className="space-y-4 relative">
+      {shareModalOpen && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/50 z-50"
+            onClick={() => setShareModalOpen(false)}
+            aria-hidden
+          />
+          <div
+            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md rounded-lg border border-slate-600 bg-slate-900 p-6 shadow-xl"
+            role="dialog"
+            aria-labelledby="share-modal-title"
+            aria-modal
+          >
+            <h2 id="share-modal-title" className="text-lg font-semibold text-slate-100 mb-3">Share your game results</h2>
+            <p className="text-sm text-slate-200 leading-relaxed mb-4">
+              {SHARE_MESSAGE}
+            </p>
+            <button
+              type="button"
+              onClick={() => setShareModalOpen(false)}
+              className="rounded-lg bg-slate-600 px-4 py-2 text-sm font-medium text-slate-100 hover:bg-slate-500"
+            >
+              Close
+            </button>
+          </div>
+        </>
+      )}
       <GMRightSidePanels openPanel={rightPanelOpen} onSetOpenPanel={setRightPanelOpen} />
+      {session.currentPhase === 'review' && (
+        <div
+          ref={gmReportRef}
+          className="absolute left-0 top-0 w-[800px] bg-slate-950 p-4"
+          style={{ left: '-9999px' }}
+          aria-hidden
+        >
+          {sessionTeams.map((team, idx) => (
+            <div key={team.id} className="report-page bg-slate-950 p-4" data-report-page>
+              {idx === 0 && (
+                <div className="card mb-4 p-4">
+                  <h2 className="text-xl font-semibold">Session {session.sessionCode}</h2>
+                  <p className="text-xs text-slate-200">
+                    GM code: <span className="font-mono">{session.gmCode}</span> • Mode:{' '}
+                    <span className="capitalize">{session.settings.gameMode}</span> • Phase: Review &amp; Defense
+                  </p>
+                </div>
+              )}
+              <div className="card p-4">
+                <h3 className="mb-3 text-sm font-semibold">{team.name} – Final selections</h3>
+                <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {team.experiment.number >= 1 && (() => {
+                        const exp = experiments.find((e) => e.id === team.experiment.number);
+                        return exp?.iconPath ? (
+                          <img
+                            src={assetPath(exp.iconPath)}
+                            alt={`Experiment ${team.experiment.number}`}
+                            className="h-[100px] w-auto object-contain rounded border border-slate-600"
+                          />
+                        ) : null;
+                      })()}
+                      {team.experiment.isLive && (
+                        <img
+                          src={assetPath('/cards/live-experiment.png')}
+                          alt="LIVE experiment"
+                          className="h-[100px] w-auto object-contain rounded border border-slate-600"
+                        />
+                      )}
+                      <p className="text-[11px] text-slate-300">
+                        {team.experiment.number === 0
+                          ? 'No experiment assigned'
+                          : `Experiment ${team.experiment.number} • ${team.experiment.isLive ? 'LIVE' : 'FIXED'}`}
+                      </p>
+                    </div>
+                    <span className="pill bg-slate-800 text-xs shrink-0">
+                      Time: {team.totalTimeCost} <span className="ml-1">⏰</span>
+                    </span>
+                  </div>
+                  <div className="grid gap-3 text-[11px] md:grid-cols-2">
+                    <div>
+                      <p className="mb-1 font-semibold text-slate-200">Acquisition</p>
+                      {team.selectedCards.acquisition.length === 0 ? (
+                        <p className="text-slate-500">None</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {team.selectedCards.acquisition.map((c) => (
+                            <div
+                              key={c.id}
+                              className={`flex flex-col items-center rounded border p-1 min-w-[70px] max-w-[85px] ${(team.gmAddedCardIds || []).includes(c.id) ? 'border-fuchsia-500' : 'border-slate-600 bg-slate-800/50'}`}
+                            >
+                              <img src={assetPath(c.iconPath)} alt={c.name} className="w-[53px] aspect-[2/3] object-contain" />
+                              <span className={`mt-0.5 text-[10px] text-center break-words w-full min-w-0 px-0.5 leading-tight ${(team.gmAddedCardIds || []).includes(c.id) ? 'text-fuchsia-300' : ''}`} title={c.name}>{c.name}</span>
+                              <span className="text-[8px]">{Array.from({ length: c.timeCost }).map((_, i) => '⏰').join('')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div>
+                      <p className="mb-1 font-semibold text-slate-200">Analysis</p>
+                      {team.selectedCards.analysis.length === 0 ? (
+                        <p className="text-slate-500">None</p>
+                      ) : (
+                        <div className="flex flex-wrap gap-2">
+                          {team.selectedCards.analysis.map((c) => (
+                            <div
+                              key={c.id}
+                              className={`flex flex-col items-center rounded border p-1 min-w-[70px] max-w-[85px] ${(team.gmAddedCardIds || []).includes(c.id) ? 'border-fuchsia-500' : 'border-slate-600 bg-slate-800/50'}`}
+                            >
+                              <img src={assetPath(c.iconPath)} alt={c.name} className="w-[53px] aspect-[2/3] object-contain" />
+                              <span className={`mt-0.5 text-[10px] text-center break-words w-full min-w-0 px-0.5 leading-tight ${(team.gmAddedCardIds || []).includes(c.id) ? 'text-fuchsia-300' : ''}`} title={c.name}>{c.name}</span>
+                              <span className="text-[8px]">{Array.from({ length: c.timeCost }).map((_, i) => '⏰').join('')}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {((team.reviewOutcome?.assignedConcerns?.length ?? 0) > 0 || (team.reviewOutcome?.assignedDetails?.length ?? 0) > 0) && (
+                    <div className="mt-2 pt-2 border-t border-slate-700 grid grid-cols-2 gap-4">
+                      <div>
+                        <p className="mb-1 text-[11px] font-semibold text-slate-200">Reviewer&apos;s concerns</p>
+                        {(team.reviewOutcome?.assignedConcerns?.length ?? 0) > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {(team.reviewOutcome.assignedConcerns || []).map((c) => (
+                              <div key={c.id} className="flex flex-col items-center rounded border border-amber-400/50 bg-amber-500/10 p-1 min-w-[70px] max-w-[85px]">
+                                <img src={assetPath(c.iconPath)} alt={c.name} className="w-[53px] aspect-[2/3] object-contain" />
+                                <span className="mt-0.5 text-[10px] text-center break-words w-full min-w-0 px-0.5 leading-tight" title={c.name}>{c.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-slate-500 text-[11px]">None</p>
+                        )}
+                      </div>
+                      <div>
+                        <p className="mb-1 text-[11px] font-semibold text-slate-200">Experimental details</p>
+                        {(team.reviewOutcome?.assignedDetails?.length ?? 0) > 0 ? (
+                          <div className="flex flex-wrap gap-2">
+                            {(team.reviewOutcome.assignedDetails || []).map((c) => (
+                              <div key={c.id} className="flex flex-col items-center rounded border border-amber-400/50 bg-amber-500/10 p-1 min-w-[70px] max-w-[85px]">
+                                <img src={assetPath(c.iconPath)} alt={c.name} className="w-[53px] aspect-[2/3] object-contain" />
+                                <span className="mt-0.5 text-[10px] text-center break-words w-full min-w-0 px-0.5 leading-tight" title={c.name}>{c.name}</span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-slate-500 text-[11px]">None</p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="space-y-4">
       <div className="card flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-xl font-semibold">Session {session.sessionCode}</h2>
@@ -440,13 +709,23 @@ export function GMDashboard() {
             >
               Previous phase
             </button>
-            <button
-              type="button"
-              onClick={() => advancePhase(session.id)}
-              className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
-            >
-              Advance phase
-            </button>
+            {session.currentPhase === 'review' ? (
+              <button
+                type="button"
+                onClick={handleCreateGameReport}
+                className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+              >
+                Create Game Report
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => advancePhase(session.id)}
+                className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400"
+              >
+                Advance phase
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -711,6 +990,7 @@ export function GMDashboard() {
           })}
         </div>
       </div>
+      </div>
     </div>
   );
 }
@@ -869,13 +1149,6 @@ export function TeamView() {
       if (groupCardIds && phase === 'acquisition') {
         groupCardIds.forEach((id) => {
           if (id !== card.id && team.selectedCards.acquisition.some((c) => c.id === id)) {
-            deselectCard(team.id, phase, id);
-          }
-        });
-      }
-      if (groupCardIds && phase === 'analysis') {
-        groupCardIds.forEach((id) => {
-          if (id !== card.id && team.selectedCards.analysis.some((c) => c.id === id)) {
             deselectCard(team.id, phase, id);
           }
         });
