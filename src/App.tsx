@@ -106,7 +106,7 @@ export default function App() {
         <RoleSelector />
         {!role && (
           <p className="text-xs text-slate-300">
-            Choose whether you are the <span className="font-semibold">Game Master</span> or part of a{' '}
+            Choose whether you are the <span className="font-semibold">Reviewer 3</span> or part of a{' '}
             <span className="font-semibold">Team</span> to get started.
           </p>
         )}

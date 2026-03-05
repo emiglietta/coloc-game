@@ -151,9 +151,9 @@ export function RoleSelector() {
         className={`card flex-1 text-center ${role === 'gm' ? 'ring-2 ring-sky-300' : ''} ${isBlocked ? 'pointer-events-none opacity-50' : ''}`}
         onClick={() => !isBlocked && setRole('gm')}
         disabled={isBlocked}
-        title={isBlocked ? 'Joined as participant—GM access blocked by session setting' : ''}
+        title={isBlocked ? 'Joined as participant—Reviewer 3 access blocked by session setting' : ''}
       >
-        <h2 className="text-lg font-semibold">Game Master</h2>
+        <h2 className="text-lg font-semibold">Reviewer 3</h2>
         <p className="mt-1 text-sm text-slate-100/80">Create and control sessions.</p>
       </button>
       <button
@@ -267,7 +267,7 @@ export function GMDashboard() {
   const handleJoinAsGM = () => {
     setGmJoinError(null);
     if (joinSessionAsGM(gmCodeInput.trim().toUpperCase())) return;
-    setGmJoinError('No session found with that GM code.');
+    setGmJoinError('No session found with that Reviewer 3 code.');
   };
 
   const sessionTeams = session
@@ -375,13 +375,13 @@ export function GMDashboard() {
       <div className="space-y-4 relative">
         <GMRightSidePanels openPanel={rightPanelOpen} onSetOpenPanel={setRightPanelOpen} />
         <div className="card">
-          <h3 className="mb-3 text-sm font-semibold text-slate-200">Join as additional GM</h3>
-          <p className="mb-2 text-xs text-slate-400">Have a GM code from another Game Master? Enter it to co-manage the session.</p>
+          <h3 className="mb-3 text-sm font-semibold text-slate-200">Join as additional Reviewer 3</h3>
+          <p className="mb-2 text-xs text-slate-400">Have a Reviewer 3 code from another Reviewer 3? Enter it to co-manage the session.</p>
           <div className="flex gap-2">
             <input
               value={gmCodeInput}
               onChange={(e) => setGmCodeInput(e.target.value)}
-              placeholder="GM code (e.g. XY7Z2A)"
+              placeholder="Reviewer 3 code (e.g. XY7Z2A)"
               className="flex-1 rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm uppercase"
             />
             <button
@@ -507,7 +507,7 @@ export function GMDashboard() {
                 <div className="card mb-4 p-4">
                   <h2 className="text-xl font-semibold">Session {session.sessionCode}</h2>
                   <p className="text-xs text-slate-200">
-                    GM code: <span className="font-mono">{session.gmCode}</span> • Mode:{' '}
+                    Reviewer 3 code: <span className="font-mono">{session.gmCode}</span> • Mode:{' '}
                     <span className="capitalize">{session.settings.gameMode}</span> • Phase: Review &amp; Defense
                   </p>
                 </div>
@@ -629,7 +629,7 @@ export function GMDashboard() {
         <div>
           <h2 className="text-xl font-semibold">Session {session.sessionCode}</h2>
           <p className="text-xs text-slate-100/80">
-            GM code: <span className="font-mono">{session.gmCode}</span> • Mode:{' '}
+            Reviewer 3 code: <span className="font-mono">{session.gmCode}</span> • Mode:{' '}
             <span className="capitalize">{session.settings.gameMode}</span>
           </p>
           <p className="mt-1 text-xs text-sky-100">
@@ -669,14 +669,14 @@ export function GMDashboard() {
               />
               Show timer to participants
             </label>
-            <label className="flex items-center gap-2 text-xs text-slate-200" title="When on, participants cannot switch to GM view">
+            <label className="flex items-center gap-2 text-xs text-slate-200" title="When on, participants cannot switch to Reviewer 3 view">
               <input
                 type="checkbox"
                 checked={(session.settings as { blockParticipantsFromGM?: boolean })?.blockParticipantsFromGM !== false}
                 onChange={(e) => setBlockParticipantsFromGM(session.id, e.target.checked)}
                 className="h-3 w-3 rounded border-slate-600 bg-slate-900"
               />
-              Block participants from GM access
+              Block participants from Reviewer 3 access
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-200" title="Tick in last 10s, end sound at 0:00">
               <input
@@ -819,7 +819,7 @@ export function GMDashboard() {
                               type="button"
                               onClick={() => gmRemoveCardFromTeam(team.id, team.selectedCards.acquisition.some(x => x.id === c.id) ? 'acquisition' : 'analysis', c.id)}
                               className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-fuchsia-500 text-white text-[10px] leading-none hover:bg-fuchsia-400"
-                              title="Remove (GM added)"
+                              title="Remove (added by Reviewer 3)"
                             >
                               ×
                             </button>
@@ -889,7 +889,7 @@ export function GMDashboard() {
                             title={`${c.name} (+${c.timeCost}⏰) — ${selected ? 'click to remove' : 'click to add'}`}
                             className={`relative flex flex-col items-center rounded border p-1 min-w-0 w-16 ${selected ? 'border-sky-400 bg-sky-500/20 ring-2 ring-sky-400/50' : 'border-slate-600 bg-slate-800/50 hover:border-slate-500 opacity-70'}`}
                           >
-                            {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">GM</span>}
+                            {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">R3</span>}
                             <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
                             <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
                             {selected && <span className="mt-0.5 text-[8px] text-sky-300">✓</span>}
@@ -916,7 +916,7 @@ export function GMDashboard() {
                             title={`${c.name} (+${c.timeCost}⏰) — ${selected ? 'click to remove' : 'click to add'}`}
                             className={`relative flex flex-col items-center rounded border p-1 min-w-0 w-16 ${selected ? 'border-emerald-400 bg-emerald-500/20 ring-2 ring-emerald-400/50' : 'border-slate-600 bg-slate-800/50 hover:border-slate-500 opacity-70'}`}
                           >
-                            {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">GM</span>}
+                            {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">R3</span>}
                             <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
                             <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
                             {selected && <span className="mt-0.5 text-[8px] text-emerald-300">✓</span>}
@@ -1019,7 +1019,7 @@ export function TeamView() {
       gradStudent: grad
     });
     if (!joined && !socket?.connected) {
-      setLocalError('Session not found. Check the code with your GM.');
+      setLocalError('Session not found. Check the code with your Reviewer 3.');
     }
   };
 
@@ -1278,7 +1278,7 @@ export function TeamView() {
         </div>
         {!isPlanningPhase && (
           <p className="text-[11px] text-slate-400">
-            Waiting for GM phase change; selections are read-only.
+            Waiting for Reviewer 3 phase change; selections are read-only.
           </p>
         )}
         <div className="space-y-4">
@@ -1397,7 +1397,7 @@ export function TeamView() {
                             <div
                               key={c.id}
                               className={`flex flex-col items-center flex-shrink-0 rounded border p-1 ${isGmAdded ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/50' : `${borderColor} bg-slate-800/50`}`}
-                              title={`${c.name}${isGmAdded ? ' (added by GM)' : ''} (+${c.timeCost} ⏰)`}
+                              title={`${c.name}${isGmAdded ? ' (added by Reviewer 3)' : ''} (+${c.timeCost} ⏰)`}
                             >
                               <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
                               <span className="mt-0.5 flex gap-0.5 text-[10px]">
