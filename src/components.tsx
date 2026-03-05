@@ -11,7 +11,7 @@ import { GMRightSidePanels } from './GMRightSidePanels';
 
 const phaseLabel: Record<SessionStatus, string> = {
   setup: 'Setup',
-  'team-formation': 'Team Formation',
+  'team-formation': 'Research Team Formation',
   acquisition: 'Acquisition Planning',
   analysis: 'Analysis Planning',
   review: 'Review & Defense',
@@ -151,7 +151,7 @@ export function RoleSelector() {
         className={`card flex-1 text-center ${role === 'gm' ? 'ring-2 ring-sky-300' : ''} ${isBlocked ? 'pointer-events-none opacity-50' : ''}`}
         onClick={() => !isBlocked && setRole('gm')}
         disabled={isBlocked}
-        title={isBlocked ? 'Joined as participant—Reviewer 3 access blocked by session setting' : ''}
+        title={isBlocked ? 'Joined as researcher—Reviewer 3 access blocked by session setting' : ''}
       >
         <h2 className="text-lg font-semibold">Reviewer 3</h2>
         <p className="mt-1 text-sm text-slate-100/80">Create and control sessions.</p>
@@ -161,7 +161,7 @@ export function RoleSelector() {
         className={`card flex-1 text-center ${role === 'team' ? 'ring-2 ring-emerald-300' : ''}`}
         onClick={() => setRole('team')}
       >
-        <h2 className="text-lg font-semibold">Team</h2>
+        <h2 className="text-lg font-semibold">Research Team</h2>
         <p className="mt-1 text-sm text-slate-100/80">Join a session and plan experiments.</p>
       </button>
     </div>
@@ -400,7 +400,7 @@ export function GMDashboard() {
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="text-sm">
-            Number of teams
+            Number of research teams
             <input
               type="number"
               min={2}
@@ -411,7 +411,7 @@ export function GMDashboard() {
             />
           </label>
           <label className="text-sm">
-            Team formation time (min)
+            Research team formation time (min)
             <input
               type="number"
               min={1}
@@ -667,16 +667,16 @@ export function GMDashboard() {
                 onChange={(e) => setShowTimerToParticipants(session.id, e.target.checked)}
                 className="h-3 w-3 rounded border-slate-600 bg-slate-900"
               />
-              Show timer to participants
+              Show timer to researchers
             </label>
-            <label className="flex items-center gap-2 text-xs text-slate-200" title="When on, participants cannot switch to Reviewer 3 view">
+            <label className="flex items-center gap-2 text-xs text-slate-200" title="When on, researchers cannot switch to Reviewer 3 view">
               <input
                 type="checkbox"
                 checked={(session.settings as { blockParticipantsFromGM?: boolean })?.blockParticipantsFromGM !== false}
                 onChange={(e) => setBlockParticipantsFromGM(session.id, e.target.checked)}
                 className="h-3 w-3 rounded border-slate-600 bg-slate-900"
               />
-              Block participants from Reviewer 3 access
+              Block researchers from Reviewer 3 access
             </label>
             <label className="flex items-center gap-2 text-xs text-slate-200" title="Tick in last 10s, end sound at 0:00">
               <input
@@ -731,9 +731,9 @@ export function GMDashboard() {
       </div>
 
       <div className="card">
-        <h3 className="mb-2 text-sm font-semibold">Teams</h3>
+        <h3 className="mb-2 text-sm font-semibold">Research Teams</h3>
         {sessionTeams.length === 0 && (
-          <p className="text-xs text-slate-300">Waiting for teams to join using the session code.</p>
+          <p className="text-xs text-slate-300">Waiting for research teams to join using the session code.</p>
         )}
         <div className="grid gap-3 md:grid-cols-2">
           {sessionTeams.map((team) => {
@@ -1059,7 +1059,7 @@ export function TeamView() {
 
         {sessionByCode && existingTeamsForSession.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-sm font-medium text-slate-200">Join existing team</h3>
+            <h3 className="text-sm font-medium text-slate-200">Join existing research team</h3>
             <div className="flex flex-wrap gap-2">
               {existingTeamsForSession.map((t) => (
                 <button
@@ -1068,7 +1068,7 @@ export function TeamView() {
                   onClick={() => {
                     setLocalError(null);
                     if (joinExistingTeam(sessionCodeInput.trim().toUpperCase(), t.id)) return;
-                    setLocalError('Could not join team.');
+                    setLocalError('Could not join research team.');
                   }}
                   className="rounded-lg border border-slate-600 bg-slate-800/60 px-3 py-2 text-sm hover:border-emerald-500/60 hover:bg-slate-700/60"
                 >
@@ -1076,15 +1076,15 @@ export function TeamView() {
                 </button>
               ))}
             </div>
-            <p className="text-xs text-slate-400">— or create a new team below —</p>
+            <p className="text-xs text-slate-400">— or create a new research team below —</p>
           </div>
         )}
 
         <div className="space-y-2 border-t border-slate-700 pt-3">
-          <h3 className="text-sm font-medium text-slate-200">Create new team</h3>
+          <h3 className="text-sm font-medium text-slate-200">Create new research team</h3>
           <div className="grid gap-3 md:grid-cols-2">
           <label className="text-sm">
-            Team name
+            Research team name
             <input
               value={teamName}
               onChange={(e) => setTeamName(e.target.value)}
@@ -1132,7 +1132,7 @@ export function TeamView() {
           disabled={isJoining}
           className="w-full rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-emerald-400 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          {isJoining ? 'Joining…' : 'Create team'}
+          {isJoining ? 'Joining…' : 'Create research team'}
         </button>
         </div>
       </div>
