@@ -31,7 +31,7 @@ export default function App() {
   }, [setSocket]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-50">
+    <div className="min-h-screen overflow-x-hidden bg-gradient-to-b from-slate-950 via-slate-950 to-slate-900 text-slate-50">
       <header className="flex min-h-[100px] items-center justify-center border-b border-slate-800 bg-slate-950/90 py-3 md:min-h-[140px] md:py-4">
         <div className="flex w-full max-w-6xl items-center justify-center px-4">
           <div className="flex items-center">
