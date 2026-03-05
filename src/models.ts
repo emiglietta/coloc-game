@@ -50,6 +50,8 @@ export interface Card {
   timeCost: number;
   incompatibleWith: string[];
   requires: string[];
+  /** When set, at least one of these card IDs must be selected. */
+  requiresAnyOf?: string[];
   tags: string[];
   iconPath?: string;
 }

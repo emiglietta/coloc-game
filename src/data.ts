@@ -54,7 +54,7 @@ export const cards: Card[] = [
     description: '100x objective, NA: 1,49',
     category: 'microscopy',
     timeCost: 0,
-    incompatibleWith: [],
+    incompatibleWith: ['mic-20x', 'mic-60x'],
     requires: [],
     tags: ['objective'],
     iconPath: '/cards/1-Microscopy_cards_100x-recto.png'
@@ -65,7 +65,7 @@ export const cards: Card[] = [
     description: '20x objective, NA: 0,8',
     category: 'microscopy',
     timeCost: 0,
-    incompatibleWith: [],
+    incompatibleWith: ['mic-100x', 'mic-60x'],
     requires: [],
     tags: ['objective'],
     iconPath: '/cards/1-Microscopy_cards_20x-recto.png'
@@ -76,7 +76,7 @@ export const cards: Card[] = [
     description: '60x objective, NA: 1,3',
     category: 'microscopy',
     timeCost: 0,
-    incompatibleWith: [],
+    incompatibleWith: ['mic-100x', 'mic-20x'],
     requires: [],
     tags: ['objective'],
     iconPath: '/cards/1-Microscopy_cards_60x-recto.png'
@@ -87,7 +87,7 @@ export const cards: Card[] = [
     description: 'Camera (CCD or sCMOS) for Widefield and Spinning Disk confocal',
     category: 'microscopy',
     timeCost: 1,
-    incompatibleWith: [],
+    incompatibleWith: ['mic-confocal-cf', 'img-simultaneous'],
     requires: [],
     tags: ['detector'],
     iconPath: '/cards/1-Microscopy_cards_Camera-r.png'
@@ -98,7 +98,7 @@ export const cards: Card[] = [
     description: 'Photomultiplier detector (PMT) for point scanning confocal',
     category: 'microscopy',
     timeCost: 2,
-    incompatibleWith: [],
+    incompatibleWith: ['mic-widefield', 'mic-spinning-disk'],
     requires: [],
     tags: ['detector'],
     iconPath: '/cards/1-Microscopy_cards_PMT-r.png'
@@ -109,7 +109,7 @@ export const cards: Card[] = [
     description: 'Point scanning confocal microscopy. Requires PMT detector',
     category: 'microscopy',
     timeCost: 2,
-    incompatibleWith: [],
+    incompatibleWith: ['mic-camera', 'mic-widefield', 'mic-spinning-disk', 'mic-superres'],
     requires: [],
     tags: ['modality'],
     iconPath: '/cards/1-Microscopy_cards_CF-recto.png'
@@ -120,7 +120,7 @@ export const cards: Card[] = [
     description: 'Spinning disk confocal microscopy. Requires camera detector',
     category: 'microscopy',
     timeCost: 1,
-    incompatibleWith: [],
+    incompatibleWith: ['mic-confocal-pmt', 'mic-superres', 'mic-widefield', 'mic-confocal-cf'],
     requires: [],
     tags: ['modality'],
     iconPath: '/cards/1-Microscopy_cards_SpD-recto.png'
@@ -131,7 +131,7 @@ export const cards: Card[] = [
     description: 'Super-resolution microscopy (e.g. STED, SIM, PALM/STORM). Requires point scanning of widefield modality',
     category: 'microscopy',
     timeCost: 3,
-    incompatibleWith: [],
+    incompatibleWith: ['mic-spinning-disk', 'mic-widefield', 'mic-confocal-cf'],
     requires: [],
     tags: ['modality', 'super-resolution'],
     iconPath: '/cards/1-Microscopy_cards_SR-recto.png'
@@ -142,7 +142,7 @@ export const cards: Card[] = [
     description: 'Widefield microscopy. Requires camera detector',
     category: 'microscopy',
     timeCost: 1,
-    incompatibleWith: [],
+    incompatibleWith: ['mic-confocal-pmt', 'mic-confocal-cf', 'mic-spinning-disk', 'mic-superres'],
     requires: [],
     tags: ['modality'],
     iconPath: '/cards/1-Microscopy_cards_WF-recto.png'
@@ -156,7 +156,7 @@ export const cards: Card[] = [
     category: 'microscopy',
     timeCost: 5,
     incompatibleWith: [],
-    requires: [],
+    requires: ['mic-superres'],
     tags: ['pixel-size'],
     iconPath: '/cards/2-Image_cards_px10-r.png'
   },
@@ -199,7 +199,7 @@ export const cards: Card[] = [
     description: 'Sample a single Z plane',
     category: 'microscopy',
     timeCost: 1,
-    incompatibleWith: [],
+    incompatibleWith: ['img-z50', 'img-z150', 'img-z500', 'ana-projections'],
     requires: [],
     tags: ['sampling'],
     iconPath: '/cards/2-Image_cards_samplingSingle-r.png'
@@ -232,7 +232,7 @@ export const cards: Card[] = [
     description: 'Simultaneous channel acquisition. Cannot use camera detector',
     category: 'microscopy',
     timeCost: 1,
-    incompatibleWith: ['img-sequential'],
+    incompatibleWith: ['img-sequential', 'mic-camera'],
     requires: [],
     tags: ['acquisition-mode'],
     iconPath: '/cards/2-Image_cards_simul-r.png'
@@ -287,7 +287,7 @@ export const cards: Card[] = [
     description: '50nm Z step size',
     category: 'microscopy',
     timeCost: 5,
-    incompatibleWith: [],
+    incompatibleWith: ['img-sampling-single'],
     requires: [],
     tags: ['z-stack'],
     iconPath: '/cards/2-Image_cards_z50-r.png'
@@ -298,7 +298,7 @@ export const cards: Card[] = [
     description: '150nm Z step size',
     category: 'microscopy',
     timeCost: 3,
-    incompatibleWith: [],
+    incompatibleWith: ['img-sampling-single'],
     requires: [],
     tags: ['z-stack'],
     iconPath: '/cards/2-Image_cards_z150-r.png'
@@ -309,7 +309,7 @@ export const cards: Card[] = [
     description: '500nm Z step size',
     category: 'microscopy',
     timeCost: 1,
-    incompatibleWith: [],
+    incompatibleWith: ['img-sampling-single'],
     requires: [],
     tags: ['z-stack'],
     iconPath: '/cards/2-Image_cards_z500-r.png'
@@ -345,6 +345,7 @@ export const cards: Card[] = [
     category: 'analysis',
     timeCost: 1,
     incompatibleWith: [],
+    requiresAnyOf: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex', 'ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'],
     requires: [],
     tags: ['scope'],
     iconPath: '/cards/3-Analysis_cards_CellClasses-r.png'
@@ -356,6 +357,7 @@ export const cards: Card[] = [
     category: 'analysis',
     timeCost: 2,
     incompatibleWith: [],
+    requiresAnyOf: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex', 'ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'],
     requires: [],
     tags: ['distance'],
     iconPath: '/cards/3-Analysis_cards_CenterToCenter_Dist-r.png'
@@ -367,6 +369,7 @@ export const cards: Card[] = [
     category: 'analysis',
     timeCost: 2,
     incompatibleWith: [],
+    requiresAnyOf: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex', 'ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'],
     requires: [],
     tags: ['distance'],
     iconPath: '/cards/3-Analysis_cards_EdgeToEdge_Dist-r.png'
@@ -378,6 +381,7 @@ export const cards: Card[] = [
     category: 'analysis',
     timeCost: 1,
     incompatibleWith: [],
+    requiresAnyOf: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex', 'ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'],
     requires: [],
     tags: ['statistics'],
     iconPath: '/cards/3-Analysis_cards_Clustering-r.png'
@@ -421,7 +425,7 @@ export const cards: Card[] = [
     description: 'Perform Z-projections (e.g. max, sum) as a pre-processing step before analysis',
     category: 'analysis',
     timeCost: 0,
-    incompatibleWith: [],
+    incompatibleWith: ['img-sampling-single'],
     requires: [],
     tags: ['projection'],
     iconPath: '/cards/3-Analysis_cards_projections-r.png'
@@ -537,5 +541,52 @@ export const reviewDetailsCards: Card[] = [
   { id: 'rev-sim-area', name: 'Similar areas', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SimArea_details-R.png' },
   { id: 'rev-sim-area', name: 'Optimized deconvolution', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptDeconvolution_details-R.png' },
   { id: 'rev-single-stain', name: 'Single stain', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SingleStain_details-R.png' }
+];
+
+/** Card groups for display in Team view. Acquisition phase: "Choose 1 card per row". */
+export interface CardGroup {
+  label: string;
+  cardIds: string[];
+  optional?: boolean;
+  /** Only show this row when the team has selected one of these card IDs (e.g. Z-step when Z-sampling Few or Whole). */
+  showOnlyWhenSelected?: string[];
+  /** Split cards across this many rows (e.g. 2 for Metrics - Object-based). */
+  splitIntoRows?: number;
+  /** Section for grouping: 'microscope' = Microscope hardware (blue), 'image' = Image acquisition settings (pink). */
+  section?: 'microscope' | 'image';
+}
+
+const MICROSCOPE_GROUPS: CardGroup[] = [
+  { label: 'Objective', cardIds: ['mic-100x', 'mic-20x', 'mic-60x'], section: 'microscope' },
+  { label: 'Modality', cardIds: ['mic-widefield', 'mic-confocal-cf', 'mic-spinning-disk'], section: 'microscope' },
+  { label: 'Detector', cardIds: ['mic-camera', 'mic-confocal-pmt'], section: 'microscope' },
+  { label: 'Super-Resolution', cardIds: ['mic-superres'], optional: true, section: 'microscope' }
+];
+
+const IMAGE_GROUPS: CardGroup[] = [
+  { label: 'Channel acquisition', cardIds: ['img-sequential', 'img-simultaneous'], section: 'image' },
+  { label: 'Pixel Size', cardIds: ['img-px10', 'img-px100', 'img-px1000'], section: 'image' },
+  { label: 'SNR', cardIds: ['img-snr30', 'img-snr5', 'img-snr1'], section: 'image' },
+  { label: 'Z-sampling', cardIds: ['img-sampling-whole', 'img-sampling-few', 'img-sampling-single'], section: 'image' },
+  { label: 'Z-step', cardIds: ['img-z50', 'img-z150', 'img-z500'], section: 'image' },
+  { label: 'Tiling', cardIds: ['img-tiling'], optional: true, section: 'image' }
+];
+
+export const acquisitionCardGroups: CardGroup[] = [...MICROSCOPE_GROUPS, ...IMAGE_GROUPS];
+
+export const acquisitionSectionConfig = {
+  microscope: { title: 'Microscope hardware', borderColor: 'border-sky-500/50' },
+  image: { title: 'Image acquisition settings', borderColor: 'border-pink-500/50' }
+} as const;
+
+export const analysisCardGroups: CardGroup[] = [
+  { label: 'ROI', cardIds: ['ana-whole-image', 'ana-cell-by-cell'] },
+  { label: 'Deconvolution', cardIds: ['ana-deconv'] },
+  { label: 'Z projection', cardIds: ['ana-projections'] },
+  { label: 'Segmentation - type', cardIds: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex'] },
+  { label: 'Segmentation - structure', cardIds: ['ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'] },
+  { label: 'Metrics - Intensity-based', cardIds: ['ana-int-correlation', 'ana-overlap'] },
+  { label: 'Metrics - Object-based', cardIds: ['ana-center-to-center', 'ana-edge-to-edge', 'ana-clustering', 'ana-cell-classes'], splitIntoRows: 2 },
+  { label: 'Metrics - signal randomization', cardIds: ['ana-signal-random'] }
 ];
 

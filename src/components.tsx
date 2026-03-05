@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGameStore, availableCards } from './store';
 import { Card, SessionStatus } from './models';
-import { experiments, reviewIssueCards, reviewDetailsCards } from './data';
+import { experiments, reviewIssueCards, reviewDetailsCards, acquisitionCardGroups, analysisCardGroups, acquisitionSectionConfig } from './data';
 import { assetPath } from './assetPath';
 import { startTickLoop, stopTickLoop, playAlarmEnd, playBombEnd } from './countdownSounds';
 import { Reviewer3GuidePanel } from './Reviewer3Guide';
@@ -110,26 +110,27 @@ function ClockIcons({ count }: { count: number }) {
   );
 }
 
-function CardPill({ card, onClick, selected }: { card: Card; onClick?: () => void; selected?: boolean }) {
+function CardPill({ card, onClick, selected, compact, disabled }: { card: Card; onClick?: () => void; selected?: boolean; compact?: boolean; disabled?: boolean }) {
   const hoverText = `${card.name}${card.description ? ` — ${card.description}` : ''} (Time cost: ${card.timeCost} ⏰${card.tags.length ? `; Tags: ${card.tags.join(', ')}` : ''})`;
+  const imgClass = compact ? 'h-[8.94rem] w-[8.94rem] md:h-[9.28rem] md:w-[9.28rem]' : 'h-[19.8rem] w-[19.8rem] md:h-[23.76rem] md:w-[23.76rem]';
+  const btnClass = compact
+    ? 'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-600/40 bg-slate-900/50 p-0 transition hover:border-slate-500/60'
+    : 'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-600/40 bg-slate-900/50 p-0 transition hover:border-slate-500/60';
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={disabled ? undefined : onClick}
       title={hoverText}
-      className={`flex items-center justify-center rounded-lg border border-slate-600/40 bg-slate-900/50 p-1 transition hover:border-slate-500/60 ${
-        selected ? 'ring-2 ring-sky-400' : ''
-      }`}
+      disabled={disabled}
+      className={`${btnClass} ${selected ? (compact ? 'ring-1 ring-sky-400' : 'ring-2 ring-sky-400') : ''} ${disabled ? 'cursor-not-allowed opacity-50 grayscale' : ''}`}
     >
-      <div className="flex flex-col items-center">
-        {card.iconPath && (
-          <img
-            src={assetPath(card.iconPath)}
-            alt={card.name}
-            className="h-40 w-40 md:h-48 md:w-48 flex-none rounded-md object-contain"
-          />
-        )}
-      </div>
+      {card.iconPath && (
+        <img
+          src={assetPath(card.iconPath)}
+          alt={card.name}
+          className={`${imgClass} block rounded-md object-contain`}
+        />
+      )}
     </button>
   );
 }
@@ -166,6 +167,36 @@ export function RoleSelector() {
 
 const acquisitionCardPool = availableCards.filter((c) => c.category === 'microscopy');
 const analysisCardPool = availableCards.filter((c) => c.category === 'analysis');
+
+const cardById = Object.fromEntries(availableCards.map((c) => [c.id, c]));
+
+function isCardDisabled(
+  card: Card,
+  phase: 'acquisition' | 'analysis',
+  selectedAcquisition: Card[],
+  selectedAnalysis: Card[]
+): boolean {
+  const acqIds = selectedAcquisition.map((c) => c.id);
+  const anaIds = selectedAnalysis.map((c) => c.id);
+  const allSelectedIds = [...acqIds, ...anaIds];
+  const selectedInPhase = phase === 'acquisition' ? selectedAcquisition : selectedAnalysis;
+
+  if (selectedInPhase.some((s) => s.id === card.id)) return false;
+
+  if (phase === 'acquisition') {
+    if (acqIds.some((id) => card.incompatibleWith.includes(id))) return true;
+  } else {
+    if (allSelectedIds.some((id) => card.incompatibleWith.includes(id))) return true;
+  }
+
+  for (const reqId of card.requires) {
+    if (!allSelectedIds.includes(reqId)) return true;
+  }
+
+  if (card.requiresAnyOf?.length && !card.requiresAnyOf.some((id) => allSelectedIds.includes(id))) return true;
+
+  return false;
+}
 
 export function GMDashboard() {
   const {
@@ -820,18 +851,43 @@ export function TeamView() {
     );
   }
 
-  const handleToggleCard = (phase: 'acquisition' | 'analysis', card: Card) => {
+  const handleToggleCard = (phase: 'acquisition' | 'analysis', card: Card, groupCardIds?: string[]) => {
     if (!isPlanningPhase) return;
+    if (isCardDisabled(card, phase, team.selectedCards.acquisition, team.selectedCards.analysis)) return;
     const selected = team.selectedCards[phase].some((c) => c.id === card.id);
     if (selected) {
       deselectCard(team.id, phase, card.id);
     } else {
+      if (groupCardIds && phase === 'acquisition') {
+        groupCardIds.forEach((id) => {
+          if (id !== card.id && team.selectedCards.acquisition.some((c) => c.id === id)) {
+            deselectCard(team.id, phase, id);
+          }
+        });
+      }
+      if (groupCardIds && phase === 'analysis') {
+        groupCardIds.forEach((id) => {
+          if (id !== card.id && team.selectedCards.analysis.some((c) => c.id === id)) {
+            deselectCard(team.id, phase, id);
+          }
+        });
+      }
       selectCard(team.id, phase, card);
     }
   };
 
   const acquisitionCards = availableCards.filter((c) => c.category === 'microscopy');
   const analysisCards = availableCards.filter((c) => c.category === 'analysis');
+
+  const acquisitionRowsToShow = acquisitionCardGroups.filter((group) => {
+    if (group.showOnlyWhenSelected) {
+      const hasRequired = group.showOnlyWhenSelected.some((id) =>
+        team.selectedCards.acquisition.some((c) => c.id === id)
+      );
+      if (!hasRequired) return false;
+    }
+    return true;
+  });
   const showAcquisitionCards = session?.currentPhase === 'acquisition' || session?.currentPhase === 'analysis';
   const showAnalysisCards = session?.currentPhase === 'analysis';
   const isReviewPhase = session?.currentPhase === 'review';
@@ -926,52 +982,111 @@ export function TeamView() {
         </div>
       )}
 
-      {showAcquisitionCards && (
+      {(showAcquisitionCards || showAnalysisCards) && (
       <div className="grid gap-4 md:grid-cols-2">
-        <section className="card">
-          <div className="mb-2 flex items-center justify-between">
-            <h3 className="text-sm font-semibold">Acquisition Planning</h3>
+      {showAcquisitionCards && (
+      <section className="card space-y-3 overflow-y-auto max-h-[70vh]">
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Acquisition Planning</h3>
+          <span className="pill text-[11px]">
+            {team.selectedCards.acquisition.length} selected
+          </span>
+        </div>
+        {!isPlanningPhase && (
+          <p className="text-[11px] text-slate-400">
+            Waiting for GM phase change; selections are read-only.
+          </p>
+        )}
+        <div className="space-y-4">
+          {(['microscope', 'image'] as const).map((sectionKey) => {
+            const sectionGroups = acquisitionRowsToShow.filter((g) => g.section === sectionKey);
+            if (sectionGroups.length === 0) return null;
+            const config = acquisitionSectionConfig[sectionKey];
+            return (
+              <div key={sectionKey} className={`rounded-lg border-2 ${config.borderColor} bg-slate-900/30 p-3`}>
+                <h4 className="mb-3 text-xs font-semibold uppercase tracking-wide text-slate-300">
+                  {config.title}
+                </h4>
+                {sectionKey === 'microscope' && (
+                  <p className="mb-3 text-sm font-medium text-sky-200">Choose 1 card per row</p>
+                )}
+                {sectionKey === 'image' && (
+                  <p className="mb-3 text-sm font-medium text-pink-200">Choose 1 card per row</p>
+                )}
+                <div className="space-y-2">
+                  {sectionGroups.map((group) => {
+                    const cardsInGroup = group.cardIds.map((id) => cardById[id]).filter(Boolean);
+                    return (
+                      <div key={group.label} className="space-y-1">
+                        <p className="text-xs font-medium text-slate-300">
+                          {group.label}
+                          {group.optional && <span className="ml-1.5 text-slate-500">(OPTIONAL)</span>}
+                        </p>
+                        <div className="flex flex-wrap gap-1">
+                          {cardsInGroup.map((card) => (
+                            <CardPill
+                              key={card.id}
+                              card={card}
+                              compact
+                              selected={team.selectedCards.acquisition.some((c) => c.id === card.id)}
+                              disabled={isCardDisabled(card, 'acquisition', team.selectedCards.acquisition, team.selectedCards.analysis)}
+                              onClick={() => handleToggleCard('acquisition', card, group.cardIds)}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+      )}
+      {showAnalysisCards && (
+        <section className="card space-y-3 overflow-y-auto max-h-[70vh]">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-semibold">Analysis Planning</h3>
             <span className="pill text-[11px]">
-              {team.selectedCards.acquisition.length} selected
+              {team.selectedCards.analysis.length} selected
             </span>
           </div>
-          {!isPlanningPhase && (
-            <p className="mb-2 text-[11px] text-slate-400">
-              Waiting for GM phase change; selections are read-only.
-            </p>
-          )}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {acquisitionCards.map((card) => (
-              <CardPill
-                key={card.id}
-                card={card}
-                selected={team.selectedCards.acquisition.some((c) => c.id === card.id)}
-                onClick={() => handleToggleCard('acquisition', card)}
-              />
-            ))}
+          <p className="text-sm font-medium text-emerald-200">Pick what you need!</p>
+          <div className="rounded-lg border-2 border-emerald-500/50 bg-slate-900/30 p-3">
+          <div className="space-y-3">
+            {analysisCardGroups.map((group) => {
+              const cardsInGroup = group.cardIds.map((id) => cardById[id]).filter(Boolean);
+              const rows = group.splitIntoRows
+                ? Array.from({ length: group.splitIntoRows }, (_, i) => {
+                    const perRow = Math.ceil(cardsInGroup.length / group.splitIntoRows!);
+                    return cardsInGroup.slice(i * perRow, (i + 1) * perRow);
+                  })
+                : [cardsInGroup];
+              return (
+                <div key={group.label} className="space-y-1">
+                  <p className="text-xs font-medium text-slate-300">{group.label}</p>
+                  {rows.map((rowCards, rowIdx) => (
+                    <div key={rowIdx} className="flex flex-wrap gap-1">
+                    {rowCards.map((card) => (
+                      <CardPill
+                        key={card.id}
+                        card={card}
+                        compact
+                        selected={team.selectedCards.analysis.some((c) => c.id === card.id)}
+                        disabled={isCardDisabled(card, 'analysis', team.selectedCards.acquisition, team.selectedCards.analysis)}
+                        onClick={() => handleToggleCard('analysis', card, group.cardIds)}
+                      />
+                    ))}
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
           </div>
         </section>
-
-        {showAnalysisCards && (
-          <section className="card">
-            <div className="mb-2 flex items-center justify-between">
-              <h3 className="text-sm font-semibold">Analysis Planning</h3>
-              <span className="pill text-[11px]">
-                {team.selectedCards.analysis.length} selected
-              </span>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {analysisCards.map((card) => (
-                <CardPill
-                  key={card.id}
-                  card={card}
-                  selected={team.selectedCards.analysis.some((c) => c.id === card.id)}
-                  onClick={() => handleToggleCard('analysis', card)}
-                />
-              ))}
-            </div>
-          </section>
-        )}
+      )}
       </div>
       )}
 
