@@ -175,7 +175,8 @@ function isCardDisabled(
   card: Card,
   phase: 'acquisition' | 'analysis',
   selectedAcquisition: Card[],
-  selectedAnalysis: Card[]
+  selectedAnalysis: Card[],
+  groupCardIds?: string[]
 ): boolean {
   const acqIds = selectedAcquisition.map((c) => c.id);
   const anaIds = selectedAnalysis.map((c) => c.id);
@@ -183,6 +184,11 @@ function isCardDisabled(
   const selectedInPhase = phase === 'acquisition' ? selectedAcquisition : selectedAnalysis;
 
   if (selectedInPhase.some((s) => s.id === card.id)) return false;
+
+  if (phase === 'acquisition' && groupCardIds?.length) {
+    const otherSelectedInGroup = groupCardIds.some((id) => id !== card.id && acqIds.includes(id));
+    if (otherSelectedInGroup) return true;
+  }
 
   if (phase === 'acquisition') {
     if (acqIds.some((id) => card.incompatibleWith.includes(id))) return true;
@@ -855,7 +861,7 @@ export function TeamView() {
 
   const handleToggleCard = (phase: 'acquisition' | 'analysis', card: Card, groupCardIds?: string[]) => {
     if (!isPlanningPhase) return;
-    if (isCardDisabled(card, phase, team.selectedCards.acquisition, team.selectedCards.analysis)) return;
+    if (isCardDisabled(card, phase, team.selectedCards.acquisition, team.selectedCards.analysis, groupCardIds)) return;
     const selected = team.selectedCards[phase].some((c) => c.id === card.id);
     if (selected) {
       deselectCard(team.id, phase, card.id);
@@ -1034,7 +1040,7 @@ export function TeamView() {
                               card={card}
                               compact
                               selected={team.selectedCards.acquisition.some((c) => c.id === card.id)}
-                              disabled={isCardDisabled(card, 'acquisition', team.selectedCards.acquisition, team.selectedCards.analysis)}
+                              disabled={isCardDisabled(card, 'acquisition', team.selectedCards.acquisition, team.selectedCards.analysis, group.cardIds)}
                               onClick={() => handleToggleCard('acquisition', card, group.cardIds)}
                             />
                           ))}
