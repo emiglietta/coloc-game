@@ -35,11 +35,14 @@ export default function App() {
       <header className="flex min-h-[100px] items-center justify-center border-b border-slate-800 bg-slate-950/90 py-3 md:min-h-[140px] md:py-4">
         <div className="flex w-full max-w-6xl items-center justify-center px-4">
           <div className="flex items-center">
-            <img
-              src={assetPath('/coLoc_logo.png')}
-              alt="coLoc Game"
-              className="h-[72px] w-auto max-w-[140px] shrink-0 object-contain object-center md:h-[100px] md:max-w-[200px] lg:h-[120px] lg:max-w-[240px]"
-            />
+            <div className="flex h-[88px] w-[160px] shrink-0 items-center justify-center overflow-hidden md:h-[124px] md:w-[240px] lg:h-[140px] lg:w-[280px]">
+              <img
+                src={assetPath('/coloc_logo.png')}
+                alt="coLoc Game"
+                className="h-[126px] w-auto max-w-none object-contain object-center md:h-[177px] lg:h-[200px]"
+                style={{ marginTop: '-15%', marginBottom: '-15%' }}
+              />
+            </div>
             <div className="ml-4 flex flex-col justify-center md:ml-6">
               <h1 className="font-display text-base font-semibold tracking-tight text-slate-100 md:text-xl">
                 coLoc Game
