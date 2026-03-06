@@ -38,7 +38,7 @@ export default function App() {
             <img
               src={assetPath('/coLoc_logo.png')}
               alt="coLoc Game"
-              className="h-[72px] w-auto object-contain md:h-[100px] lg:h-[120px]"
+              className="h-[72px] w-auto max-w-[140px] shrink-0 object-contain object-center md:h-[100px] md:max-w-[200px] lg:h-[120px] lg:max-w-[240px]"
             />
             <div className="ml-4 flex flex-col justify-center md:ml-6">
               <h1 className="font-display text-base font-semibold tracking-tight text-slate-100 md:text-xl">
