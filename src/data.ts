@@ -109,7 +109,7 @@ export const cards: Card[] = [
     description: 'Point scanning confocal microscopy. Requires PMT detector',
     category: 'microscopy',
     timeCost: 2,
-    incompatibleWith: ['mic-camera', 'mic-widefield', 'mic-spinning-disk', 'mic-superres'],
+    incompatibleWith: ['mic-camera', 'mic-widefield', 'mic-spinning-disk'],
     requires: [],
     tags: ['modality'],
     iconPath: '/cards/1-Microscopy_cards_CF-recto.png'
@@ -131,7 +131,7 @@ export const cards: Card[] = [
     description: 'Super-resolution microscopy (e.g. STED, SIM, PALM/STORM). Requires point scanning of widefield modality',
     category: 'microscopy',
     timeCost: 3,
-    incompatibleWith: ['mic-spinning-disk', 'mic-widefield', 'mic-confocal-cf'],
+    incompatibleWith: ['mic-spinning-disk'],
     requires: [],
     tags: ['modality', 'super-resolution'],
     iconPath: '/cards/1-Microscopy_cards_SR-recto.png'
@@ -142,7 +142,7 @@ export const cards: Card[] = [
     description: 'Widefield microscopy. Requires camera detector',
     category: 'microscopy',
     timeCost: 1,
-    incompatibleWith: ['mic-confocal-pmt', 'mic-confocal-cf', 'mic-spinning-disk', 'mic-superres'],
+    incompatibleWith: ['mic-confocal-pmt', 'mic-confocal-cf', 'mic-spinning-disk'],
     requires: [],
     tags: ['modality'],
     iconPath: '/cards/1-Microscopy_cards_WF-recto.png'
@@ -334,6 +334,7 @@ export const cards: Card[] = [
     category: 'analysis',
     timeCost: 2,
     incompatibleWith: [],
+    requiresAnyOf: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex', 'ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'],
     requires: [],
     tags: ['scope'],
     iconPath: '/cards/3-Analysis_cards_CellByCell-r.png'
@@ -341,11 +342,11 @@ export const cards: Card[] = [
   {
     id: 'ana-cell-classes',
     name: 'Cell classes',
-    description: 'Classify cells into different classes. Requires segmentation',
+    description: 'Classify cells into different classes. Requires segmentation (structure: cell, nucleus, or both)',
     category: 'analysis',
     timeCost: 1,
     incompatibleWith: [],
-    requiresAnyOf: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex', 'ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'],
+    requiresAnyOf: ['ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'],
     requires: [],
     tags: ['scope'],
     iconPath: '/cards/3-Analysis_cards_CellClasses-r.png'
@@ -365,11 +366,11 @@ export const cards: Card[] = [
   {
     id: 'ana-edge-to-edge',
     name: 'Edge-to-edge distance',
-    description: 'Co-distribution analysis, edge-to-edge. Requires complex segmentation',
+    description: 'Co-distribution analysis, edge-to-edge. Requires segmentation (except points)',
     category: 'analysis',
     timeCost: 2,
     incompatibleWith: [],
-    requiresAnyOf: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex', 'ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'],
+    requiresAnyOf: ['ana-seg-bob', 'ana-seg-complex', 'ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'],
     requires: [],
     tags: ['distance'],
     iconPath: '/cards/3-Analysis_cards_EdgeToEdge_Dist-r.png'
@@ -554,6 +555,8 @@ export interface CardGroup {
   splitIntoRows?: number;
   /** Section for grouping: 'microscope' = Microscope hardware (blue), 'image' = Image acquisition settings (pink). */
   section?: 'microscope' | 'image';
+  /** Render multiple sub-groups in the same row, each with its own label (e.g. Deconvolution + Z projection). */
+  pairedRow?: Array<{ label: string; cardIds: string[] }>;
 }
 
 const MICROSCOPE_GROUPS: CardGroup[] = [
@@ -581,8 +584,14 @@ export const acquisitionSectionConfig = {
 
 export const analysisCardGroups: CardGroup[] = [
   { label: 'ROI', cardIds: ['ana-whole-image', 'ana-cell-by-cell'] },
-  { label: 'Deconvolution', cardIds: ['ana-deconv'] },
-  { label: 'Z projection', cardIds: ['ana-projections'] },
+  {
+    label: 'Pre-processing',
+    cardIds: ['ana-deconv', 'ana-projections'],
+    pairedRow: [
+      { label: 'Deconvolution', cardIds: ['ana-deconv'] },
+      { label: 'Z projection', cardIds: ['ana-projections'] }
+    ]
+  },
   { label: 'Segmentation - type', cardIds: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex'] },
   { label: 'Segmentation - structure', cardIds: ['ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'] },
   { label: 'Metrics - Intensity-based', cardIds: ['ana-int-correlation', 'ana-overlap'] },

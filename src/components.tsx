@@ -1340,6 +1340,32 @@ export function TeamView() {
           <div className="rounded-lg border-2 border-emerald-500/50 bg-slate-900/30 p-3">
           <div className="space-y-3">
             {analysisCardGroups.map((group) => {
+              if (group.pairedRow) {
+                return (
+                  <div key={group.pairedRow.map((p) => p.label).join('-')} className="grid grid-cols-2 gap-x-12 gap-y-1">
+                    {group.pairedRow.map((sub) => {
+                      const cardsInSub = sub.cardIds.map((id) => cardById[id]).filter(Boolean);
+                      return (
+                        <div key={sub.label} className="space-y-1 flex-1 min-w-0">
+                          <p className="text-xs font-medium text-slate-300">{sub.label}</p>
+                          <div className="flex flex-wrap gap-1">
+                            {cardsInSub.map((card) => (
+                              <CardPill
+                                key={card.id}
+                                card={card}
+                                compact
+                                selected={team.selectedCards.analysis.some((c) => c.id === card.id)}
+                                disabled={isCardDisabled(card, 'analysis', team.selectedCards.acquisition, team.selectedCards.analysis)}
+                                onClick={() => handleToggleCard('analysis', card, sub.cardIds)}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
               const cardsInGroup = group.cardIds.map((id) => cardById[id]).filter(Boolean);
               const rows = group.splitIntoRows
                 ? Array.from({ length: group.splitIntoRows }, (_, i) => {
