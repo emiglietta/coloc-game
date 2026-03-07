@@ -583,7 +583,6 @@ export const acquisitionSectionConfig = {
 } as const;
 
 export const analysisCardGroups: CardGroup[] = [
-  { label: 'ROI', cardIds: ['ana-whole-image', 'ana-cell-by-cell'] },
   {
     label: 'Pre-processing',
     cardIds: ['ana-deconv', 'ana-projections'],
@@ -592,6 +591,7 @@ export const analysisCardGroups: CardGroup[] = [
       { label: 'Z projection', cardIds: ['ana-projections'] }
     ]
   },
+  { label: 'ROI', cardIds: ['ana-whole-image', 'ana-cell-by-cell'] },
   { label: 'Segmentation - type', cardIds: ['ana-seg-point', 'ana-seg-bob', 'ana-seg-complex'] },
   { label: 'Segmentation - structure', cardIds: ['ana-seg-nuc-cyto', 'ana-seg-nuc', 'ana-seg-cyto'] },
   { label: 'Metrics - Intensity-based', cardIds: ['ana-int-correlation', 'ana-overlap'] },
