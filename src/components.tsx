@@ -148,21 +148,49 @@ export function RoleSelector() {
     <div className="mb-6 flex gap-3">
       <button
         type="button"
-        className={`card flex-1 text-center ${role === 'gm' ? 'ring-2 ring-sky-300' : ''} ${isBlocked ? 'pointer-events-none opacity-50' : ''}`}
+        className={`card flex-1 text-center overflow-hidden relative min-h-[100px] ${role === 'gm' ? 'ring-2 ring-sky-300' : ''} ${isBlocked ? 'pointer-events-none opacity-50' : ''}`}
         onClick={() => !isBlocked && setRole('gm')}
         disabled={isBlocked}
         title={isBlocked ? 'Joined as researcher—Reviewer 3 access blocked by session setting' : ''}
+        style={{
+          backgroundImage: `url(${assetPath('/Reviewer3.png')})`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: '22% center',
+          backgroundSize: 'auto 100%'
+        }}
       >
-        <h2 className="text-lg font-semibold">Reviewer 3</h2>
-        <p className="mt-1 text-sm text-slate-100/80">Create and control sessions.</p>
+        <div
+          className="absolute inset-0 z-[5] pointer-events-none"
+          style={{
+            background: 'linear-gradient(to right, transparent 0%, transparent 35%, rgba(15,23,42,0.4) 50%, rgba(15,23,42,0.95) 65%, rgba(15,23,42,0.95) 100%)'
+          }}
+        />
+        <div className="relative z-10 pl-[48%] pr-4 py-2 text-left">
+          <h2 className="text-xl font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Reviewer 3</h2>
+          <p className="mt-1 text-base text-slate-100/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Create and control sessions.</p>
+        </div>
       </button>
       <button
         type="button"
-        className={`card flex-1 text-center ${role === 'team' ? 'ring-2 ring-emerald-300' : ''}`}
+        className={`card flex-1 text-center overflow-hidden relative min-h-[100px] ${role === 'team' ? 'ring-2 ring-emerald-300' : ''}`}
         onClick={() => setRole('team')}
+        style={{
+          backgroundImage: `url(${assetPath('/ResearchTeam.png')})`,
+          backgroundRepeat: 'no-repeat',
+          backgroundPosition: '78% center',
+          backgroundSize: 'auto 100%'
+        }}
       >
-        <h2 className="text-lg font-semibold">Research Team</h2>
-        <p className="mt-1 text-sm text-slate-100/80">Join a session and plan experiments.</p>
+        <div
+          className="absolute inset-0 z-[5] pointer-events-none"
+          style={{
+            background: 'linear-gradient(to left, transparent 0%, transparent 35%, rgba(15,23,42,0.4) 50%, rgba(15,23,42,0.95) 65%, rgba(15,23,42,0.95) 100%)'
+          }}
+        />
+        <div className="relative z-10 pr-[48%] pl-4 py-2 text-left">
+          <h2 className="text-xl font-semibold drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Research Team</h2>
+          <p className="mt-1 text-base text-slate-100/80 drop-shadow-[0_1px_2px_rgba(0,0,0,0.8)]">Join a session and plan experiments.</p>
+        </div>
       </button>
     </div>
   );
