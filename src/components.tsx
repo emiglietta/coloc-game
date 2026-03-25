@@ -345,6 +345,7 @@ export function GMDashboard() {
   const [teamFormationTime, setTeamFormationTime] = React.useState(4);
   const [acqTime, setAcqTime] = React.useState(10);
   const [analysisTime, setAnalysisTime] = React.useState(10);
+  const [reviewTime, setReviewTime] = React.useState(8);
   const [mode, setMode] = React.useState<'time-attack' | 'budget'>('time-attack');
   const [gmCodeInput, setGmCodeInput] = React.useState('');
   const [gmJoinError, setGmJoinError] = React.useState<string | null>(null);
@@ -365,6 +366,7 @@ export function GMDashboard() {
       teamFormationTime,
       acquisitionTime: acqTime,
       analysisTime: analysisTime,
+      reviewTime: reviewTime,
       gameMode: mode
     });
   };
@@ -522,6 +524,16 @@ export function GMDashboard() {
               min={1}
               value={analysisTime}
               onChange={(e) => setAnalysisTime(Number(e.target.value))}
+              className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+            />
+          </label>
+          <label className="text-sm">
+            Review &amp; Defense time (min)
+            <input
+              type="number"
+              min={1}
+              value={reviewTime}
+              onChange={(e) => setReviewTime(Number(e.target.value))}
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
             />
           </label>

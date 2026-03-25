@@ -55,6 +55,7 @@ export function createSession(state, { settings }) {
   const sessionCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   const gmCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   const teamFormationMinutes = settings.teamFormationTime ?? 4;
+  const reviewMinutes = settings.reviewTime ?? 8;
   const session = {
     id,
     gmCode,
@@ -63,6 +64,7 @@ export function createSession(state, { settings }) {
     settings: {
       ...settings,
       teamFormationTime: teamFormationMinutes,
+      reviewTime: reviewMinutes,
       blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true,
       countdownSoundEnabled: settings.countdownSoundEnabled ?? true,
       countdownSoundType: settings.countdownSoundType ?? 'alarm'
@@ -133,6 +135,8 @@ export function advancePhase(state, { sessionId }) {
     phaseEndTime = Date.now() + session.settings.acquisitionTime * 60 * 1000;
   } else if (newPhase === 'analysis') {
     phaseEndTime = Date.now() + session.settings.analysisTime * 60 * 1000;
+  } else if (newPhase === 'review') {
+    phaseEndTime = Date.now() + session.settings.reviewTime * 60 * 1000;
   }
   const updated = {
     ...session,
@@ -151,7 +155,16 @@ export function previousPhase(state, { sessionId }) {
   const phase = prevPhase[session.currentPhase];
   if (phase === session.currentPhase) return { state };
   const teamFormationMinutes = session.settings.teamFormationTime ?? 4;
-  const phaseEndTime = phase === 'team-formation' ? Date.now() + teamFormationMinutes * 60 * 1000 : null;
+  let phaseEndTime = null;
+  if (phase === 'team-formation') {
+    phaseEndTime = Date.now() + teamFormationMinutes * 60 * 1000;
+  } else if (phase === 'acquisition') {
+    phaseEndTime = Date.now() + session.settings.acquisitionTime * 60 * 1000;
+  } else if (phase === 'analysis') {
+    phaseEndTime = Date.now() + session.settings.analysisTime * 60 * 1000;
+  } else if (phase === 'review') {
+    phaseEndTime = Date.now() + session.settings.reviewTime * 60 * 1000;
+  }
   const updated = {
     ...session,
     currentPhase: phase,

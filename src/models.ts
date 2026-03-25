@@ -18,6 +18,7 @@ export interface Session {
     teamFormationTime: number;
     acquisitionTime: number;
     analysisTime: number;
+    reviewTime: number;
     gameMode: GameMode;
     /** When true (default), participants cannot switch to GM view. */
     blockParticipantsFromGM?: boolean;

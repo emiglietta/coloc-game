@@ -120,6 +120,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const sessionCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const gmCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const teamFormationMinutes = settings.teamFormationTime ?? 4;
+    const reviewMinutes = (settings as any).reviewTime ?? 8;
     const session: Session = {
       id,
       gmCode,
@@ -128,6 +129,7 @@ export const useGameStore = create<GameState>((set, get) => ({
       settings: {
         ...settings,
         teamFormationTime: teamFormationMinutes,
+        reviewTime: reviewMinutes,
         blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true,
         countdownSoundEnabled: settings.countdownSoundEnabled ?? true,
         countdownSoundType: settings.countdownSoundType ?? 'alarm'
@@ -250,6 +252,8 @@ export const useGameStore = create<GameState>((set, get) => ({
         phaseEndTime = Date.now() + session.settings.acquisitionTime * 60 * 1000;
       } else if (newPhase === 'analysis') {
         phaseEndTime = Date.now() + session.settings.analysisTime * 60 * 1000;
+      } else if (newPhase === 'review') {
+        phaseEndTime = Date.now() + session.settings.reviewTime * 60 * 1000;
       }
       const updated: Session = {
         ...session,
@@ -368,8 +372,16 @@ export const useGameStore = create<GameState>((set, get) => ({
       const phase = prevPhase[session.currentPhase];
       if (phase === session.currentPhase) return state;
       const teamFormationMinutes = session.settings.teamFormationTime ?? 4;
-      const phaseEndTime =
-        phase === 'team-formation' ? Date.now() + teamFormationMinutes * 60 * 1000 : null;
+      let phaseEndTime: number | null = null;
+      if (phase === 'team-formation') {
+        phaseEndTime = Date.now() + teamFormationMinutes * 60 * 1000;
+      } else if (phase === 'acquisition') {
+        phaseEndTime = Date.now() + session.settings.acquisitionTime * 60 * 1000;
+      } else if (phase === 'analysis') {
+        phaseEndTime = Date.now() + session.settings.analysisTime * 60 * 1000;
+      } else if (phase === 'review') {
+        phaseEndTime = Date.now() + session.settings.reviewTime * 60 * 1000;
+      }
       const updated: Session = {
         ...session,
         currentPhase: phase,
