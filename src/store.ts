@@ -121,6 +121,7 @@ export const useGameStore = create<GameState>((set, get) => ({
     const gmCode = Math.random().toString(36).substring(2, 8).toUpperCase();
     const teamFormationMinutes = settings.teamFormationTime ?? 4;
     const reviewMinutes = (settings as any).reviewTime ?? 8;
+    const timeBudgetClocks = (settings as any).timeBudget ?? 30;
     const session: Session = {
       id,
       gmCode,
@@ -130,6 +131,7 @@ export const useGameStore = create<GameState>((set, get) => ({
         ...settings,
         teamFormationTime: teamFormationMinutes,
         reviewTime: reviewMinutes,
+        timeBudget: timeBudgetClocks,
         blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true,
         countdownSoundEnabled: settings.countdownSoundEnabled ?? true,
         countdownSoundType: settings.countdownSoundType ?? 'alarm'

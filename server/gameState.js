@@ -56,6 +56,7 @@ export function createSession(state, { settings }) {
   const gmCode = Math.random().toString(36).substring(2, 8).toUpperCase();
   const teamFormationMinutes = settings.teamFormationTime ?? 4;
   const reviewMinutes = settings.reviewTime ?? 8;
+  const timeBudgetClocks = settings.timeBudget ?? 30;
   const session = {
     id,
     gmCode,
@@ -65,6 +66,7 @@ export function createSession(state, { settings }) {
       ...settings,
       teamFormationTime: teamFormationMinutes,
       reviewTime: reviewMinutes,
+      timeBudget: timeBudgetClocks,
       blockParticipantsFromGM: settings.blockParticipantsFromGM ?? true,
       countdownSoundEnabled: settings.countdownSoundEnabled ?? true,
       countdownSoundType: settings.countdownSoundType ?? 'alarm'

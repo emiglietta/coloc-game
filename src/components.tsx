@@ -18,6 +18,12 @@ const phaseLabel: Record<SessionStatus, string> = {
   complete: 'Complete'
 };
 
+function gameModeLabel(gameMode: string) {
+  if (gameMode === 'budget') return 'Time Budget Game';
+  if (gameMode === 'time-attack') return 'Time Attack';
+  return gameMode;
+}
+
 /** Countdown from phaseEndTime; red when <= 2 minutes. Updates every second. */
 function PhaseTimer({
   session
@@ -263,7 +269,8 @@ function isCardDisabled(
   phase: 'acquisition' | 'analysis',
   selectedAcquisition: Card[],
   selectedAnalysis: Card[],
-  groupCardIds?: string[]
+  groupCardIds?: string[],
+  budgetRemainingClocks?: number
 ): boolean {
   const acqIds = selectedAcquisition.map((c) => c.id);
   const anaIds = selectedAnalysis.map((c) => c.id);
@@ -271,6 +278,8 @@ function isCardDisabled(
   const selectedInPhase = phase === 'acquisition' ? selectedAcquisition : selectedAnalysis;
 
   if (selectedInPhase.some((s) => s.id === card.id)) return false;
+
+  if (budgetRemainingClocks != null && card.timeCost > budgetRemainingClocks) return true;
 
   if (phase === 'acquisition' && groupCardIds?.length) {
     const otherSelectedInGroup = groupCardIds.some((id) => id !== card.id && acqIds.includes(id));
@@ -346,6 +355,7 @@ export function GMDashboard() {
   const [acqTime, setAcqTime] = React.useState(10);
   const [analysisTime, setAnalysisTime] = React.useState(10);
   const [reviewTime, setReviewTime] = React.useState(8);
+  const [timeBudget, setTimeBudget] = React.useState(30);
   const [mode, setMode] = React.useState<'time-attack' | 'budget'>('time-attack');
   const [gmCodeInput, setGmCodeInput] = React.useState('');
   const [gmJoinError, setGmJoinError] = React.useState<string | null>(null);
@@ -367,7 +377,8 @@ export function GMDashboard() {
       acquisitionTime: acqTime,
       analysisTime: analysisTime,
       reviewTime: reviewTime,
-      gameMode: mode
+      gameMode: mode,
+      ...(mode === 'budget' ? { timeBudget } : {})
     });
   };
 
@@ -545,9 +556,21 @@ export function GMDashboard() {
               className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
             >
               <option value="time-attack">Time Attack</option>
-              <option value="budget">Budget Mode</option>
+              <option value="budget">Time Budget Game</option>
             </select>
           </label>
+          {mode === 'budget' && (
+            <label className="text-sm">
+              Time budget (clock units)
+              <input
+                type="number"
+                min={0}
+                value={timeBudget}
+                onChange={(e) => setTimeBudget(Number(e.target.value))}
+                className="mt-1 w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+              />
+            </label>
+          )}
         </div>
         <button
           type="button"
@@ -605,7 +628,7 @@ export function GMDashboard() {
                   <h2 className="text-xl font-semibold">Session {session.sessionCode}</h2>
                   <p className="text-xs text-slate-200">
                     Reviewer 3 code: <span className="font-mono">{session.gmCode}</span> • Mode:{' '}
-                    <span className="capitalize">{session.settings.gameMode}</span> • Phase: Review &amp; Defense
+                    <span>{gameModeLabel(session.settings.gameMode)}</span> • Phase: Review &amp; Defense
                   </p>
                 </div>
               )}
@@ -731,7 +754,7 @@ export function GMDashboard() {
           <h2 className="text-xl font-semibold">Session {session.sessionCode}</h2>
           <p className="text-xs text-slate-100/80">
             Reviewer 3 code: <span className="font-mono">{session.gmCode}</span> • Mode:{' '}
-            <span className="capitalize">{session.settings.gameMode}</span>
+            <span>{gameModeLabel(session.settings.gameMode)}</span>
           </p>
           <p className="mt-1 text-xs text-sky-100">
             Current phase: <span className="font-semibold">{phaseLabel[session.currentPhase]}</span>
@@ -1035,12 +1058,19 @@ export function GMDashboard() {
                     <div className="grid grid-cols-4 gap-2">
                       {reviewIssueCards.map((card) => {
                         const assigned = (team.reviewOutcome.assignedConcerns || []).some((c) => c.id === card.id);
+                        const disableByBudget =
+                          session?.settings.gameMode === 'budget' &&
+                          !assigned &&
+                          card.timeCost > Math.max(0, (session.settings.timeBudget ?? 0) - team.totalTimeCost);
                         return (
-                          <HoverTooltip key={card.id} content={<CardHoverTooltipContent card={card} />}>
+                          <HoverTooltip key={card.id} content={<CardHoverTooltipContent card={card} />} dim={disableByBudget}>
                             <button
                               type="button"
                               onClick={() => (assigned ? unassignReviewerConcern(team.id, card.id) : assignReviewerConcern(team.id, card))}
-                              className={`flex flex-col items-center rounded border p-1 min-w-0 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
+                              disabled={disableByBudget}
+                              className={`flex flex-col items-center rounded border p-1 min-w-0 ${
+                                assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'
+                              } ${disableByBudget ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                             >
                               <img src={assetPath(card.iconPath)} alt={card.name} className="h-24 w-24 md:h-28 md:w-28 object-contain flex-shrink-0" />
                               <span className="mt-0.5 text-[10px] text-center break-words line-clamp-2 w-full px-0.5">
@@ -1062,12 +1092,19 @@ export function GMDashboard() {
                     <div className="grid grid-cols-4 gap-2">
                       {reviewDetailsCards.map((card) => {
                         const assigned = (team.reviewOutcome.assignedDetails || []).some((c) => c.id === card.id);
+                        const disableByBudget =
+                          session?.settings.gameMode === 'budget' &&
+                          !assigned &&
+                          card.timeCost > Math.max(0, (session.settings.timeBudget ?? 0) - team.totalTimeCost);
                         return (
-                          <HoverTooltip key={card.id} content={<CardHoverTooltipContent card={card} />}>
+                          <HoverTooltip key={card.id} content={<CardHoverTooltipContent card={card} />} dim={disableByBudget}>
                             <button
                               type="button"
                               onClick={() => (assigned ? unassignReviewerDetail(team.id, card.id) : assignReviewerDetail(team.id, card))}
-                              className={`flex flex-col items-center rounded border p-1 min-w-0 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
+                              disabled={disableByBudget}
+                              className={`flex flex-col items-center rounded border p-1 min-w-0 ${
+                                assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'
+                              } ${disableByBudget ? 'opacity-50 grayscale cursor-not-allowed' : ''}`}
                             >
                               <img src={assetPath(card.iconPath)} alt={card.name} className="h-24 w-24 md:h-28 md:w-28 object-contain flex-shrink-0" />
                               <span className="mt-0.5 text-[10px] text-center break-words line-clamp-2 w-full px-0.5">
@@ -1110,6 +1147,15 @@ export function TeamView() {
 
   const session = currentSessionId ? sessions[currentSessionId] : null;
   const team = currentTeamId ? teams[currentTeamId] : null;
+
+  const isBudgetMode = session?.settings.gameMode === 'budget';
+  const timeBudgetClocks = session?.settings.timeBudget ?? 0;
+  const budgetRemainingClocks =
+    isBudgetMode && team ? Math.max(0, timeBudgetClocks - team.totalTimeCost) : undefined;
+  const showBudgetCountdown =
+    isBudgetMode &&
+    session &&
+    (session.currentPhase === 'acquisition' || session.currentPhase === 'analysis' || session.currentPhase === 'review');
 
   const handleJoin = () => {
     setLocalError(null);
@@ -1242,7 +1288,17 @@ export function TeamView() {
 
   const handleToggleCard = (phase: 'acquisition' | 'analysis', card: Card, groupCardIds?: string[]) => {
     if (!isPlanningPhase) return;
-    if (isCardDisabled(card, phase, team.selectedCards.acquisition, team.selectedCards.analysis, groupCardIds)) return;
+    if (
+      isCardDisabled(
+        card,
+        phase,
+        team.selectedCards.acquisition,
+        team.selectedCards.analysis,
+        groupCardIds,
+        budgetRemainingClocks
+      )
+    )
+      return;
     const selected = team.selectedCards[phase].some((c) => c.id === card.id);
     if (selected) {
       deselectCard(team.id, phase, card.id);
@@ -1288,10 +1344,22 @@ export function TeamView() {
             Session {session.sessionCode} • Phase: {phaseLabel[session.currentPhase] ?? session.currentPhase}
           </p>
           <p className="mt-1 text-xs text-sky-100">
-            Total time:{' '}
-            <span className="font-semibold">
-              {team.totalTimeCost} <span className="ml-1">⏰</span>
-            </span>
+            {showBudgetCountdown ? (
+              <>
+                Budget remaining:{' '}
+                <span className="font-semibold">
+                  {budgetRemainingClocks ?? 0} <span className="ml-1">⏰</span>
+                </span>
+                <span className="ml-2 text-slate-300">/ {timeBudgetClocks} ⏰</span>
+              </>
+            ) : (
+              <>
+                Total time:{' '}
+                <span className="font-semibold">
+                  {team.totalTimeCost} <span className="ml-1">⏰</span>
+                </span>
+              </>
+            )}
           </p>
         </div>
         <div className="flex flex-col items-end gap-2 text-xs text-slate-300 md:flex-row md:items-center">
@@ -1414,7 +1482,7 @@ export function TeamView() {
                               card={card}
                               compact
                               selected={team.selectedCards.acquisition.some((c) => c.id === card.id)}
-                              disabled={isCardDisabled(card, 'acquisition', team.selectedCards.acquisition, team.selectedCards.analysis, group.cardIds)}
+                              disabled={isCardDisabled(card, 'acquisition', team.selectedCards.acquisition, team.selectedCards.analysis, group.cardIds, budgetRemainingClocks)}
                               onClick={() => handleToggleCard('acquisition', card, group.cardIds)}
                             />
                           ))}
@@ -1456,7 +1524,7 @@ export function TeamView() {
                                 card={card}
                                 compact
                                 selected={team.selectedCards.analysis.some((c) => c.id === card.id)}
-                                disabled={isCardDisabled(card, 'analysis', team.selectedCards.acquisition, team.selectedCards.analysis)}
+                                disabled={isCardDisabled(card, 'analysis', team.selectedCards.acquisition, team.selectedCards.analysis, undefined, budgetRemainingClocks)}
                                 onClick={() => handleToggleCard('analysis', card, sub.cardIds)}
                               />
                             ))}
@@ -1485,7 +1553,7 @@ export function TeamView() {
                         card={card}
                         compact
                         selected={team.selectedCards.analysis.some((c) => c.id === card.id)}
-                        disabled={isCardDisabled(card, 'analysis', team.selectedCards.acquisition, team.selectedCards.analysis)}
+                        disabled={isCardDisabled(card, 'analysis', team.selectedCards.acquisition, team.selectedCards.analysis, group.cardIds, budgetRemainingClocks)}
                         onClick={() => handleToggleCard('analysis', card, group.cardIds)}
                       />
                     ))}

@@ -20,6 +20,8 @@ export interface Session {
     analysisTime: number;
     reviewTime: number;
     gameMode: GameMode;
+    /** Only used when `gameMode === 'budget'`: max total "clock" time available. */
+    timeBudget?: number;
     /** When true (default), participants cannot switch to GM view. */
     blockParticipantsFromGM?: boolean;
     /** When true (default), play countdown sounds (tick in last 10s, end sound at 0). */
