@@ -51,7 +51,7 @@ export const cards: Card[] = [
   {
     id: 'mic-100x',
     name: '100x objective',
-    description: '100x objective, NA: 1,49',
+    description: 'NA: 1,49',
     category: 'microscopy',
     timeCost: 0,
     incompatibleWith: ['mic-20x', 'mic-60x'],
@@ -62,7 +62,7 @@ export const cards: Card[] = [
   {
     id: 'mic-20x',
     name: '20x objective',
-    description: '20x objective, NA: 0,8',
+    description: 'NA: 0,8',
     category: 'microscopy',
     timeCost: 0,
     incompatibleWith: ['mic-100x', 'mic-60x'],
@@ -73,7 +73,7 @@ export const cards: Card[] = [
   {
     id: 'mic-60x',
     name: '60x objective',
-    description: '60x objective, NA: 1,3',
+    description: 'NA: 1,3',
     category: 'microscopy',
     timeCost: 0,
     incompatibleWith: ['mic-100x', 'mic-20x'],
@@ -84,7 +84,7 @@ export const cards: Card[] = [
   {
     id: 'mic-camera',
     name: 'Camera',
-    description: 'Camera (CCD or sCMOS) for Widefield and Spinning Disk confocal',
+    description: 'CCD or sCMOS for Widefield and Spinning Disk confocal',
     category: 'microscopy',
     timeCost: 1,
     incompatibleWith: ['mic-confocal-cf', 'img-simultaneous'],
@@ -95,7 +95,7 @@ export const cards: Card[] = [
   {
     id: 'mic-confocal-pmt',
     name: 'PMT',
-    description: 'Photomultiplier detector (PMT) for point scanning confocal',
+    description: 'Photomultiplier detector for point scanning confocal',
     category: 'microscopy',
     timeCost: 2,
     incompatibleWith: ['mic-widefield', 'mic-spinning-disk'],
@@ -105,8 +105,8 @@ export const cards: Card[] = [
   },
   {
     id: 'mic-confocal-cf',
-    name: 'Point scanning confocal',
-    description: 'Point scanning confocal microscopy. Requires PMT detector',
+    name: 'Point scanning confocal microscopy',
+    description: 'REQUIRES PMT detector',
     category: 'microscopy',
     timeCost: 2,
     incompatibleWith: ['mic-camera', 'mic-widefield', 'mic-spinning-disk'],
@@ -116,8 +116,8 @@ export const cards: Card[] = [
   },
   {
     id: 'mic-spinning-disk',
-    name: 'Spinning disk confocal',
-    description: 'Spinning disk confocal microscopy. Requires camera detector',
+    name: 'Spinning disk confocal microscopy',
+    description: 'REQUIRES camera detector',
     category: 'microscopy',
     timeCost: 1,
     incompatibleWith: ['mic-confocal-pmt', 'mic-superres', 'mic-widefield', 'mic-confocal-cf'],
@@ -127,8 +127,8 @@ export const cards: Card[] = [
   },
   {
     id: 'mic-superres',
-    name: 'Super-resolution',
-    description: 'Super-resolution microscopy (e.g. STED, SIM, PALM/STORM). Requires point scanning of widefield modality',
+    name: 'Super-resolution microscopy',
+    description: '(e.g. STED, SIM, PALM/STORM). REQUIRES point scanning or widefield modality',
     category: 'microscopy',
     timeCost: 3,
     incompatibleWith: ['mic-spinning-disk'],
@@ -138,8 +138,8 @@ export const cards: Card[] = [
   },
   {
     id: 'mic-widefield',
-    name: 'Widefield',
-    description: 'Widefield microscopy. Requires camera detector',
+    name: 'Widefield microscopy',
+    description: 'REQUIRES camera detector',
     category: 'microscopy',
     timeCost: 1,
     incompatibleWith: ['mic-confocal-pmt', 'mic-confocal-cf', 'mic-spinning-disk'],
@@ -152,7 +152,7 @@ export const cards: Card[] = [
   {
     id: 'img-px10',
     name: 'Pixel size 10',
-    description: 'Pixel size 10. Requires Super-res',
+    description: 'REQUIRES Super-Resolution microscopy modality',
     category: 'microscopy',
     timeCost: 5,
     incompatibleWith: [],
@@ -163,7 +163,7 @@ export const cards: Card[] = [
   {
     id: 'img-px100',
     name: 'Pixel size 100',
-    description: 'Pixel size 100',
+    description: '',
     category: 'microscopy',
     timeCost: 3,
     incompatibleWith: [],
@@ -174,7 +174,7 @@ export const cards: Card[] = [
   {
     id: 'img-px1000',
     name: 'Pixel size 1000',
-    description: 'Pixel size 1000',
+    description: '',
     category: 'microscopy',
     timeCost: 1,
     incompatibleWith: [],
@@ -185,7 +185,7 @@ export const cards: Card[] = [
   {
     id: 'img-sampling-few',
     name: 'Sampling – few planes',
-    description: 'Sample a few Z planes',
+    description: 'Sample some but not all of your specimen in Z',
     category: 'microscopy',
     timeCost: 3,
     incompatibleWith: [],
@@ -196,7 +196,7 @@ export const cards: Card[] = [
   {
     id: 'img-sampling-single',
     name: 'Sampling – single plane',
-    description: 'Sample a single Z plane',
+    description: 'Sample a single Z plane of your specimen',
     category: 'microscopy',
     timeCost: 1,
     incompatibleWith: ['img-z50', 'img-z150', 'img-z500', 'ana-projections'],
@@ -207,7 +207,7 @@ export const cards: Card[] = [
   {
     id: 'img-sampling-whole',
     name: 'Sampling – whole volume',
-    description: 'Sample the whole Z volume',
+    description: 'Sample the whole Z volume of you specimen',
     category: 'microscopy',
     timeCost: 5,
     incompatibleWith: [],
@@ -217,8 +217,8 @@ export const cards: Card[] = [
   },
   {
     id: 'img-sequential',
-    name: 'Sequential acquisition',
-    description: 'Sequential channel acquisition',
+    name: 'Sequential channel acquisition',
+    description: 'Aquire both channels sequentially (one after the other)',
     category: 'microscopy',
     timeCost: 2,
     incompatibleWith: ['img-simultaneous'],
@@ -229,7 +229,7 @@ export const cards: Card[] = [
   {
     id: 'img-simultaneous',
     name: 'Simultaneous acquisition',
-    description: 'Simultaneous channel acquisition. Cannot use camera detector',
+    description: 'Aquire both channels at the same time. INCOMPATIBLE with (a single) camera detector',
     category: 'microscopy',
     timeCost: 1,
     incompatibleWith: ['img-sequential', 'mic-camera'],
@@ -283,8 +283,8 @@ export const cards: Card[] = [
   },
   {
     id: 'img-z50',
-    name: 'Z-stack 50',
-    description: '50nm Z step size',
+    name: 'Z-step 50',
+    description: 'Set distance between sampled Z planes to 50nm',
     category: 'microscopy',
     timeCost: 5,
     incompatibleWith: ['img-sampling-single'],
@@ -294,8 +294,8 @@ export const cards: Card[] = [
   },
   {
     id: 'img-z150',
-    name: 'Z-stack 150',
-    description: '150nm Z step size',
+    name: 'Z-step 150',
+    description: 'Set distance between sampled Z planes to 150nm',
     category: 'microscopy',
     timeCost: 3,
     incompatibleWith: ['img-sampling-single'],
@@ -305,8 +305,8 @@ export const cards: Card[] = [
   },
   {
     id: 'img-z500',
-    name: 'Z-stack 500',
-    description: '500nm Z step size',
+    name: 'Z-step 500',
+    description: 'Set distance between sampled Z planes to 500nm',
     category: 'microscopy',
     timeCost: 1,
     incompatibleWith: ['img-sampling-single'],
@@ -330,7 +330,7 @@ export const cards: Card[] = [
   {
     id: 'ana-cell-by-cell',
     name: 'Cell by cell',
-    description: 'Perform analysis on a cell-by-cell basis. Requires segmentation',
+    description: 'Perform analysis on a cell-by-cell basis. REQUIRES segmentation',
     category: 'analysis',
     timeCost: 2,
     incompatibleWith: [],
@@ -342,7 +342,7 @@ export const cards: Card[] = [
   {
     id: 'ana-cell-classes',
     name: 'Cell classes',
-    description: 'Classify cells into different classes. Requires segmentation (structure: cell, nucleus, or both)',
+    description: 'Classify cells into different classes. REQUIRES segmentation (cell, nucleus, or both)',
     category: 'analysis',
     timeCost: 1,
     incompatibleWith: [],
@@ -354,7 +354,7 @@ export const cards: Card[] = [
   {
     id: 'ana-center-to-center',
     name: 'Center-to-center distance',
-    description: 'Co-distribution analysis, center-to-center. Requires blob segmentation',
+    description: 'Co-distribution analysis: Center-to-center. REQUIRES any segmentation',
     category: 'analysis',
     timeCost: 2,
     incompatibleWith: [],
@@ -366,7 +366,7 @@ export const cards: Card[] = [
   {
     id: 'ana-edge-to-edge',
     name: 'Edge-to-edge distance',
-    description: 'Co-distribution analysis, edge-to-edge. Requires segmentation (except points)',
+    description: 'Co-distribution analysis: edge-to-edge. REQUIRES any segmentation (except points)',
     category: 'analysis',
     timeCost: 2,
     incompatibleWith: [],
@@ -378,7 +378,7 @@ export const cards: Card[] = [
   {
     id: 'ana-clustering',
     name: 'Clustering',
-    description: 'Co-distribution analysis, clustering. Requires segmentation',
+    description: 'Co-distribution analysis: Clustering. REQUIRES segmentation',
     category: 'analysis',
     timeCost: 1,
     incompatibleWith: [],
@@ -422,7 +422,7 @@ export const cards: Card[] = [
   },
   {
     id: 'ana-projections',
-    name: 'Projections',
+    name: 'Z-Projection',
     description: 'Perform Z-projections (e.g. max, sum) as a pre-processing step before analysis',
     category: 'analysis',
     timeCost: 0,
@@ -489,7 +489,7 @@ export const cards: Card[] = [
   {
     id: 'ana-seg-point',
     name: 'Segment points',
-    description: 'Segment single points',
+    description: 'Identify the centroid of the objects of interest as single points',
     category: 'analysis',
     timeCost: 1,
     incompatibleWith: [],
@@ -500,7 +500,7 @@ export const cards: Card[] = [
   {
     id: 'ana-signal-random',
     name: 'Randomized signal',
-    description: 'Perform signal randomnization (Costes randomization) as a control analysis',
+    description: 'Perform signal randomnization (Costes randomization) as a control',
     category: 'analysis',
     timeCost: 1,
     incompatibleWith: [],
@@ -512,36 +512,36 @@ export const cards: Card[] = [
 
 // Review phase: issue cards (Reviewer's concerns) – GM assigns to teams; add timeCost to team total.
 export const reviewIssueCards: Card[] = [
-  { id: 'rev-bleaching', name: 'Bleaching', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Bleaching_issue-R.png' },
-  { id: 'rev-cell-var', name: 'Cell variability', description: '', category: 'review', timeCost: 5, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CellVariability_issue-R.png' },
-  { id: 'rev-cross-em', name: 'Cross-emission', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CrossEm_issue-R.png' },
-  { id: 'rev-cross-ex', name: 'Cross-excitation', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CrossEx_issue-R.png' },
-  { id: 'rev-crowded', name: 'Crowded', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Crowded_issue-R.png' },
-  { id: 'rev-deconv-art', name: 'Deconvolution artefact', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DeconvArtefact_issue-R.png' },
-  { id: 'rev-diff-area', name: 'Different signal areas', description: '', category: 'review', timeCost: 5, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DiffArea_issue-R.png' },
-  { id: 'rev-intra-var', name: 'Intra-cellular variability', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_IntraCellVar_issue-R.png' },
-  { id: 'rev-low-snr', name: 'Low SNR', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_LowSNR_issue-R.png' },
-  { id: 'rev-oof-blur', name: 'Out-of-focus blur', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OOFBlur_issue-R.png' },
-  { id: 'rev-proj-art', name: 'Projection artefact', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_ProjArtefact_issue-R.png' },
-  { id: 'rev-ri-mismatch', name: 'RI mismatch', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_RIMismatch_issue-R.png' },
-  { id: 'rev-saturation', name: 'Saturation', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_saturation_issue-R.png' },
-  { id: 'rev-slow', name: 'Slow', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Slow_issue-R.png' },
-  { id: 'rev-threq', name: 'Threshold', description: '', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Threq_issue-R.png' }
+  { id: 'rev-bleaching', name: 'Bleaching', description: 'Reviewer 3 considers that imaging conditions are more likely to induce bleaching of your specimen and ask for controls', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Bleaching_issue-R.png' },
+  { id: 'rev-cell-var', name: 'Cell variability', description: 'Reviewer 3 has concerns about the variability in protein expression that might affect the metric used', category: 'review', timeCost: 5, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CellVariability_issue-R.png' },
+  { id: 'rev-cross-ex', name: 'Cross-excitation', description: 'Reviewer 3 has concerns about the fluorophores combination and ask for controls', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CrossEx_issue-R.png' },
+  { id: 'rev-cross-em', name: 'Cross-emission', description: 'Reviewer 3 has concerns about the fluorophores combination and the filter set/window of collection', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CrossEm_issue-R.png' },
+  { id: 'rev-crowded', name: 'Crowded', description: 'Reviewer 3 considers that your Objects can\'t be segmented individually because of the high density', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Crowded_issue-R.png' },
+  { id: 'rev-deconv-art', name: 'Deconvolution artefact', description: 'Reviewer 3 has concerns about the deconvolution which might have produced artefact', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DeconvArtefact_issue-R.png' },
+  { id: 'rev-diff-area', name: 'Different signal areas', description: 'Reviewer 3 considers that signals Areas are clearly different and emits doubt about the metric you deciced to use', category: 'review', timeCost: 5, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DiffArea_issue-R.png' },
+  { id: 'rev-intra-var', name: 'Intra-cellular variability', description: 'Reviewer 3 has concerns about the intra-cellular variability of the colocalization metric', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_IntraCellVar_issue-R.png' },
+  { id: 'rev-low-snr', name: 'Low SNR', description: 'Reviewer 3 considers that your image SNR is too low to efficiently segment objects/points', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_LowSNR_issue-R.png' },
+  { id: 'rev-oof-blur', name: 'Out-of-focus blur', description: 'Reviewer 3 considers that your imaging settings are prone to artefacts of Out Of Focus Blur', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OOFBlur_issue-R.png' },
+  { id: 'rev-proj-art', name: 'Projection artefact', description: 'Reviewer 3 considers that your imaging settings are prone to artefacts of projection', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_ProjArtefact_issue-R.png' },
+  { id: 'rev-ri-mismatch', name: 'RI mismatch', description: 'Reviewer 3 has concerns about the Refractive Index mismatch', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_RIMismatch_issue-R.png' },
+  { id: 'rev-saturation', name: 'Saturation', description: 'Reviewer 3 considers that your images are saturated and ask to re-acquire images.', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_saturation_issue-R.png' },
+  { id: 'rev-slow', name: 'Slow', description: 'Reviewer 3 considers that your imaging settings are prone to artefacts due to the slow speed', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Slow_issue-R.png' },
+  { id: 'rev-threq', name: 'Threshold', description: 'Reviewer 3 considers that defining a threshold is necessary, and a method should be provided to explain how', category: 'review', timeCost: 3, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Threq_issue-R.png' }
 ];
 
 // Review phase: details cards (Experimental details) – GM assigns to teams; add timeCost to team total. Team rolls dice (4–6) to use.
 export const reviewDetailsCards: Card[] = [
-  { id: 'rev-cell-hom', name: 'Cell homogeneity', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CellHom_details-R.png' },
-  { id: 'rev-dif-area', name: 'Different areas', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DifArea_details-R.png' },
-  { id: 'rev-live', name: 'Live', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Live_details-R.png' },
-  { id: 'rev-opt-fluo', name: 'Optimized fluorophores', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptFluo_details-R.png' },
-  { id: 'rev-opt-window', name: 'Optimized emission window', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptWindow_details-R.png' },
-  { id: 'rev-preserved', name: 'Preserved', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Preserved_details-R.png' },
-  { id: 'rev-range', name: 'Range', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_range_details-R.png' },
-  { id: 'rev-ri-match', name: 'RI match', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_RIMatch_details-R.png' },
-  { id: 'rev-sim-area', name: 'Similar areas', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SimArea_details-R.png' },
-  { id: 'rev-sim-area', name: 'Optimized deconvolution', description: '', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptDeconvolution_details-R.png' },
-  { id: 'rev-single-stain', name: 'Single stain', description: '', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SingleStain_details-R.png' }
+  { id: 'rev-cell-hom', name: 'Cell homogeneity', description: 'You checked that protein expression is homogenous in the cell population', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_CellHom_details-R.png' },
+  { id: 'rev-dif-area', name: 'Different areas', description: 'You checked that your signals have similar areas', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_DifArea_details-R.png' },
+  { id: 'rev-live', name: 'Live', description: 'This experiment is performed on a live sample', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Live_details-R.png' },
+  { id: 'rev-opt-fluo', name: 'Optimized fluorophores', description: 'You optimized your set of fluorophores.', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptFluo_details-R.png' },
+  { id: 'rev-opt-window', name: 'Optimized emission window', description: 'You optimized your filter set / window of collection', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptWindow_details-R.png' },
+  { id: 'rev-preserved', name: 'Preserved', description: 'You checked that you were not bleaching your specimen while acquiring images', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_Preserved_details-R.png' },
+  { id: 'rev-range', name: 'Range', description: 'You didn\'t saturate your image by optimizing your acquisition. It was not so long afterall!', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_range_details-R.png' },
+  { id: 'rev-ri-match', name: 'RI match', description: 'You checked that objective and mounting media are good choices to avoid Refractive Index mismatch', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_RIMatch_details-R.png' },
+  { id: 'rev-sim-area', name: 'Similar areas', description: 'You checked that your signals have similar areas', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SimArea_details-R.png' },
+  { id: 'rev-opt-deconvolution', name: 'Optimized deconvolution', description: 'You checked the results of the deconvolution and optimized the parameters', category: 'review', timeCost: 1, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_OptDeconvolution_details-R.png' },
+  { id: 'rev-single-stain', name: 'Single stain', description: 'You did Single Stain controls, it\'s time to use them!', category: 'review', timeCost: 0, incompatibleWith: [], requires: [], tags: [], iconPath: '/cards/review/4-Details_Issues_cards_SingleStain_details-R.png' }
 ];
 
 /** Card groups for display in Team view. Acquisition phase: "Choose 1 card per row". */

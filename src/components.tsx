@@ -113,28 +113,85 @@ function ClockIcons({ count }: { count: number }) {
   );
 }
 
+function CardHoverTooltipContent({ card }: { card: Card }) {
+  return (
+    <>
+      <div className="text-[12px] font-semibold">{card.name}</div>
+      <div className="text-slate-200">{card.description || '—'}</div>
+      <div className="text-slate-300">
+        <span className="italic">{`Time cost: ${card.timeCost} `}</span>
+        <span aria-hidden>⏰</span>
+      </div>
+    </>
+  );
+}
+
+function HoverTooltip({
+  content,
+  dim,
+  children
+}: {
+  content: React.ReactNode;
+  dim?: boolean;
+  children: React.ReactNode;
+}) {
+  const [show, setShow] = React.useState(false);
+  const [pos, setPos] = React.useState<{ x: number; y: number }>({ x: 0, y: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    const assumedW = 340;
+    const assumedH = 140;
+    const pad = 12;
+    const x = Math.min(e.clientX + pad, window.innerWidth - assumedW - pad);
+    const y = Math.min(e.clientY + pad, window.innerHeight - assumedH - pad);
+    setPos({ x: Math.max(pad, x), y: Math.max(pad, y) });
+  };
+
+  return (
+    <span
+      className="inline-block"
+      onMouseEnter={() => setShow(true)}
+      onMouseLeave={() => setShow(false)}
+      onMouseMove={handleMouseMove}
+    >
+      {show && (
+        <span
+          className={`pointer-events-none fixed z-[9999] w-max max-w-[min(320px,90vw)] whitespace-normal rounded-md border border-slate-700 bg-slate-950/95 px-2 py-1 text-left text-[11px] leading-snug text-slate-100 shadow-lg shadow-slate-950/50 ${
+            dim ? 'opacity-60' : ''
+          }`}
+          style={{ left: pos.x, top: pos.y }}
+        >
+          {content}
+        </span>
+      )}
+      {children}
+    </span>
+  );
+}
+
 function CardPill({ card, onClick, selected, compact, disabled }: { card: Card; onClick?: () => void; selected?: boolean; compact?: boolean; disabled?: boolean }) {
-  const hoverText = `${card.name}${card.description ? ` — ${card.description}` : ''} (Time cost: ${card.timeCost} ⏰${card.tags.length ? `; Tags: ${card.tags.join(', ')}` : ''})`;
   const imgClass = compact ? 'h-[8.94rem] w-[8.94rem] md:h-[9.28rem] md:w-[9.28rem]' : 'h-[19.8rem] w-[19.8rem] md:h-[23.76rem] md:w-[23.76rem]';
   const btnClass = compact
-    ? 'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-md border border-slate-600/40 bg-slate-900/50 p-0 transition hover:border-slate-500/60'
-    : 'inline-flex shrink-0 items-center justify-center overflow-hidden rounded-lg border border-slate-600/40 bg-slate-900/50 p-0 transition hover:border-slate-500/60';
+    ? 'inline-flex shrink-0 items-center justify-center overflow-visible rounded-md border border-slate-600/40 bg-slate-900/50 p-0 transition hover:border-slate-500/60'
+    : 'inline-flex shrink-0 items-center justify-center overflow-visible rounded-lg border border-slate-600/40 bg-slate-900/50 p-0 transition hover:border-slate-500/60';
   return (
-    <button
-      type="button"
-      onClick={disabled ? undefined : onClick}
-      title={hoverText}
-      disabled={disabled}
-      className={`${btnClass} ${selected ? (compact ? 'ring-1 ring-sky-400' : 'ring-2 ring-sky-400') : ''} ${disabled ? 'cursor-not-allowed opacity-50 grayscale' : ''}`}
-    >
-      {card.iconPath && (
-        <img
-          src={assetPath(card.iconPath)}
-          alt={card.name}
-          className={`${imgClass} block rounded-md object-contain`}
-        />
-      )}
-    </button>
+    <HoverTooltip content={<CardHoverTooltipContent card={card} />} dim={!!disabled}>
+      <button
+        type="button"
+        onClick={disabled ? undefined : onClick}
+        aria-label={`${card.name}${card.description ? ` — ${card.description}` : ''} (Time cost: ${card.timeCost} ⏰)`}
+        aria-disabled={disabled || undefined}
+        className={`${btnClass} ${selected ? (compact ? 'ring-1 ring-sky-400' : 'ring-2 ring-sky-400') : ''} ${disabled ? 'cursor-not-allowed opacity-50 grayscale' : ''}`}
+      >
+        {card.iconPath && (
+          <img
+            src={assetPath(card.iconPath)}
+            alt={card.name}
+            className={`${imgClass} block rounded-md object-contain`}
+          />
+        )}
+      </button>
+    </HoverTooltip>
   );
 }
 
@@ -619,10 +676,12 @@ export function GMDashboard() {
                         {(team.reviewOutcome?.assignedConcerns?.length ?? 0) > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {(team.reviewOutcome.assignedConcerns || []).map((c) => (
-                              <div key={c.id} className="flex flex-col items-center rounded border border-amber-400/50 bg-amber-500/10 p-1 min-w-[70px] max-w-[85px]">
-                                <img src={assetPath(c.iconPath)} alt={c.name} className="w-[53px] aspect-[2/3] object-contain" />
-                                <span className="mt-0.5 text-[10px] text-center break-words w-full min-w-0 px-0.5 leading-tight" title={c.name}>{c.name}</span>
-                              </div>
+                              <HoverTooltip key={c.id} content={<CardHoverTooltipContent card={c} />}>
+                                <div className="flex flex-col items-center rounded border border-amber-400/50 bg-amber-500/10 p-1 min-w-[70px] max-w-[85px]">
+                                  <img src={assetPath(c.iconPath)} alt={c.name} className="w-[53px] aspect-[2/3] object-contain" />
+                                  <span className="mt-0.5 text-[10px] text-center break-words w-full min-w-0 px-0.5 leading-tight">{c.name}</span>
+                                </div>
+                              </HoverTooltip>
                             ))}
                           </div>
                         ) : (
@@ -634,10 +693,12 @@ export function GMDashboard() {
                         {(team.reviewOutcome?.assignedDetails?.length ?? 0) > 0 ? (
                           <div className="flex flex-wrap gap-2">
                             {(team.reviewOutcome.assignedDetails || []).map((c) => (
-                              <div key={c.id} className="flex flex-col items-center rounded border border-amber-400/50 bg-amber-500/10 p-1 min-w-[70px] max-w-[85px]">
-                                <img src={assetPath(c.iconPath)} alt={c.name} className="w-[53px] aspect-[2/3] object-contain" />
-                                <span className="mt-0.5 text-[10px] text-center break-words w-full min-w-0 px-0.5 leading-tight" title={c.name}>{c.name}</span>
-                              </div>
+                              <HoverTooltip key={c.id} content={<CardHoverTooltipContent card={c} />}>
+                                <div className="flex flex-col items-center rounded border border-amber-400/50 bg-amber-500/10 p-1 min-w-[70px] max-w-[85px]">
+                                  <img src={assetPath(c.iconPath)} alt={c.name} className="w-[53px] aspect-[2/3] object-contain" />
+                                  <span className="mt-0.5 text-[10px] text-center break-words w-full min-w-0 px-0.5 leading-tight">{c.name}</span>
+                                </div>
+                              </HoverTooltip>
                             ))}
                           </div>
                         ) : (
@@ -837,11 +898,10 @@ export function GMDashboard() {
                     {[...team.selectedCards.acquisition, ...team.selectedCards.analysis].map((c) => {
                       const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
                       return (
-                        <div
-                          key={c.id}
-                          className={`relative flex flex-col items-center flex-shrink-0 rounded border p-1 ${isGmAdded ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/50' : 'border-slate-600 bg-slate-800/50'}`}
-                          title={c.name}
-                        >
+                        <HoverTooltip key={c.id} content={<CardHoverTooltipContent card={c} />}>
+                          <div
+                            className={`relative flex flex-col items-center flex-shrink-0 rounded border p-1 ${isGmAdded ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/50' : 'border-slate-600 bg-slate-800/50'}`}
+                          >
                           {isGmAdded && (
                             <button
                               type="button"
@@ -858,7 +918,8 @@ export function GMDashboard() {
                               <span key={i}>⏰</span>
                             ))}
                           </span>
-                        </div>
+                          </div>
+                        </HoverTooltip>
                       );
                     })}
                     {(team.selectedCards.acquisition.length === 0 && team.selectedCards.analysis.length === 0) && (
@@ -906,22 +967,22 @@ export function GMDashboard() {
                         const selected = team.selectedCards.acquisition.some((x) => x.id === c.id);
                         const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
                         return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() =>
-                              selected
-                                ? gmRemoveCardFromTeam(team.id, 'acquisition', c.id)
-                                : gmAddCardToTeam(team.id, 'acquisition', c)
-                            }
-                            title={`${c.name} (+${c.timeCost}⏰) — ${selected ? 'click to remove' : 'click to add'}`}
-                            className={`relative flex flex-col items-center rounded border p-1 min-w-0 w-16 ${selected ? 'border-sky-400 bg-sky-500/20 ring-2 ring-sky-400/50' : 'border-slate-600 bg-slate-800/50 hover:border-slate-500 opacity-70'}`}
-                          >
-                            {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">R3</span>}
-                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
-                            <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
-                            {selected && <span className="mt-0.5 text-[8px] text-sky-300">✓</span>}
-                          </button>
+                          <HoverTooltip key={c.id} content={<CardHoverTooltipContent card={c} />}>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                selected
+                                  ? gmRemoveCardFromTeam(team.id, 'acquisition', c.id)
+                                  : gmAddCardToTeam(team.id, 'acquisition', c)
+                              }
+                              className={`relative flex flex-col items-center rounded border p-1 min-w-0 w-16 ${selected ? 'border-sky-400 bg-sky-500/20 ring-2 ring-sky-400/50' : 'border-slate-600 bg-slate-800/50 hover:border-slate-500 opacity-70'}`}
+                            >
+                              {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">R3</span>}
+                              <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
+                              <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
+                              {selected && <span className="mt-0.5 text-[8px] text-sky-300">✓</span>}
+                            </button>
+                          </HoverTooltip>
                         );
                       })}
                     </div>
@@ -933,22 +994,22 @@ export function GMDashboard() {
                         const selected = team.selectedCards.analysis.some((x) => x.id === c.id);
                         const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
                         return (
-                          <button
-                            key={c.id}
-                            type="button"
-                            onClick={() =>
-                              selected
-                                ? gmRemoveCardFromTeam(team.id, 'analysis', c.id)
-                                : gmAddCardToTeam(team.id, 'analysis', c)
-                            }
-                            title={`${c.name} (+${c.timeCost}⏰) — ${selected ? 'click to remove' : 'click to add'}`}
-                            className={`relative flex flex-col items-center rounded border p-1 min-w-0 w-16 ${selected ? 'border-emerald-400 bg-emerald-500/20 ring-2 ring-emerald-400/50' : 'border-slate-600 bg-slate-800/50 hover:border-slate-500 opacity-70'}`}
-                          >
-                            {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">R3</span>}
-                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
-                            <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
-                            {selected && <span className="mt-0.5 text-[8px] text-emerald-300">✓</span>}
-                          </button>
+                          <HoverTooltip key={c.id} content={<CardHoverTooltipContent card={c} />}>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                selected
+                                  ? gmRemoveCardFromTeam(team.id, 'analysis', c.id)
+                                  : gmAddCardToTeam(team.id, 'analysis', c)
+                              }
+                              className={`relative flex flex-col items-center rounded border p-1 min-w-0 w-16 ${selected ? 'border-emerald-400 bg-emerald-500/20 ring-2 ring-emerald-400/50' : 'border-slate-600 bg-slate-800/50 hover:border-slate-500 opacity-70'}`}
+                            >
+                              {isGmAdded && <span className="absolute -top-0.5 right-0.5 text-[8px] text-fuchsia-400 font-semibold">R3</span>}
+                              <img src={assetPath(c.iconPath)} alt={c.name} className="h-14 w-14 object-contain flex-shrink-0" />
+                              <span className="mt-0.5 text-[9px] text-center break-words line-clamp-2 w-full">{c.name}</span>
+                              {selected && <span className="mt-0.5 text-[8px] text-emerald-300">✓</span>}
+                            </button>
+                          </HoverTooltip>
                         );
                       })}
                     </div>
@@ -963,23 +1024,23 @@ export function GMDashboard() {
                       {reviewIssueCards.map((card) => {
                         const assigned = (team.reviewOutcome.assignedConcerns || []).some((c) => c.id === card.id);
                         return (
-                          <button
-                            key={card.id}
-                            type="button"
-                            onClick={() => (assigned ? unassignReviewerConcern(team.id, card.id) : assignReviewerConcern(team.id, card))}
-                            title={card.name}
-                            className={`flex flex-col items-center rounded border p-1 min-w-0 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
-                          >
-                            <img src={assetPath(card.iconPath)} alt={card.name} className="h-24 w-24 md:h-28 md:w-28 object-contain flex-shrink-0" />
-                            <span className="mt-0.5 text-[10px] text-center break-words line-clamp-2 w-full px-0.5" title={`${card.name} (+${card.timeCost} clock(s))`}>
-                              {card.name}
-                            </span>
-                            <span className="mt-0.5 text-[10px]">
-                              {Array.from({ length: card.timeCost }).map((_, i) => (
-                                <span key={i}>⏰</span>
-                              ))}
-                            </span>
-                          </button>
+                          <HoverTooltip key={card.id} content={<CardHoverTooltipContent card={card} />}>
+                            <button
+                              type="button"
+                              onClick={() => (assigned ? unassignReviewerConcern(team.id, card.id) : assignReviewerConcern(team.id, card))}
+                              className={`flex flex-col items-center rounded border p-1 min-w-0 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
+                            >
+                              <img src={assetPath(card.iconPath)} alt={card.name} className="h-24 w-24 md:h-28 md:w-28 object-contain flex-shrink-0" />
+                              <span className="mt-0.5 text-[10px] text-center break-words line-clamp-2 w-full px-0.5">
+                                {card.name}
+                              </span>
+                              <span className="mt-0.5 text-[10px]">
+                                {Array.from({ length: card.timeCost }).map((_, i) => (
+                                  <span key={i}>⏰</span>
+                                ))}
+                              </span>
+                            </button>
+                          </HoverTooltip>
                         );
                       })}
                     </div>
@@ -990,23 +1051,23 @@ export function GMDashboard() {
                       {reviewDetailsCards.map((card) => {
                         const assigned = (team.reviewOutcome.assignedDetails || []).some((c) => c.id === card.id);
                         return (
-                          <button
-                            key={card.id}
-                            type="button"
-                            onClick={() => (assigned ? unassignReviewerDetail(team.id, card.id) : assignReviewerDetail(team.id, card))}
-                            title={card.name}
-                            className={`flex flex-col items-center rounded border p-1 min-w-0 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
-                          >
-                            <img src={assetPath(card.iconPath)} alt={card.name} className="h-24 w-24 md:h-28 md:w-28 object-contain flex-shrink-0" />
-                            <span className="mt-0.5 text-[10px] text-center break-words line-clamp-2 w-full px-0.5" title={`${card.name} (+${card.timeCost} clock(s))`}>
-                              {card.name}
-                            </span>
-                            <span className="mt-0.5 text-[10px]">
-                              {Array.from({ length: card.timeCost }).map((_, i) => (
-                                <span key={i}>⏰</span>
-                              ))}
-                            </span>
-                          </button>
+                          <HoverTooltip key={card.id} content={<CardHoverTooltipContent card={card} />}>
+                            <button
+                              type="button"
+                              onClick={() => (assigned ? unassignReviewerDetail(team.id, card.id) : assignReviewerDetail(team.id, card))}
+                              className={`flex flex-col items-center rounded border p-1 min-w-0 ${assigned ? 'border-amber-400 bg-amber-500/20' : 'border-slate-600 bg-slate-800/50'}`}
+                            >
+                              <img src={assetPath(card.iconPath)} alt={card.name} className="h-24 w-24 md:h-28 md:w-28 object-contain flex-shrink-0" />
+                              <span className="mt-0.5 text-[10px] text-center break-words line-clamp-2 w-full px-0.5">
+                                {card.name}
+                              </span>
+                              <span className="mt-0.5 text-[10px]">
+                                {Array.from({ length: card.timeCost }).map((_, i) => (
+                                  <span key={i}>⏰</span>
+                                ))}
+                              </span>
+                            </button>
+                          </HoverTooltip>
                         );
                       })}
                     </div>
@@ -1448,18 +1509,18 @@ export function TeamView() {
                         cards.map((c) => {
                           const isGmAdded = (team.gmAddedCardIds || []).includes(c.id);
                           return (
-                            <div
-                              key={c.id}
-                              className={`flex flex-col items-center flex-shrink-0 rounded border p-1 ${isGmAdded ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/50' : `${borderColor} bg-slate-800/50`}`}
-                              title={`${c.name}${isGmAdded ? ' (added by Reviewer 3)' : ''} (+${c.timeCost} ⏰)`}
-                            >
-                              <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
-                              <span className="mt-0.5 flex gap-0.5 text-[10px]">
-                                {Array.from({ length: c.timeCost }).map((_, i) => (
-                                  <span key={i}>⏰</span>
-                                ))}
-                              </span>
-                            </div>
+                            <HoverTooltip key={c.id} content={<CardHoverTooltipContent card={c} />}>
+                              <div
+                                className={`flex flex-col items-center flex-shrink-0 rounded border p-1 ${isGmAdded ? 'border-fuchsia-500 ring-2 ring-fuchsia-500/50' : `${borderColor} bg-slate-800/50`}`}
+                              >
+                                <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
+                                <span className="mt-0.5 flex gap-0.5 text-[10px]">
+                                  {Array.from({ length: c.timeCost }).map((_, i) => (
+                                    <span key={i}>⏰</span>
+                                  ))}
+                                </span>
+                              </div>
+                            </HoverTooltip>
                           );
                         })
                       )}
@@ -1476,14 +1537,16 @@ export function TeamView() {
                 ) : (
                   <div className="flex flex-wrap gap-2">
                     {(team.reviewOutcome?.assignedConcerns || []).map((c) => (
-                      <div key={c.id} className="rounded border border-slate-600 bg-slate-800/50 p-1" title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})`}>
-                        <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
-                        <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
-                          {Array.from({ length: c.timeCost }).map((_, i) => (
-                            <span key={i}>⏰</span>
-                          ))}
-                        </span>
-                      </div>
+                      <HoverTooltip key={c.id} content={<CardHoverTooltipContent card={c} />}>
+                        <div className="rounded border border-slate-600 bg-slate-800/50 p-1">
+                          <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
+                          <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
+                            {Array.from({ length: c.timeCost }).map((_, i) => (
+                              <span key={i}>⏰</span>
+                            ))}
+                          </span>
+                        </div>
+                      </HoverTooltip>
                     ))}
                   </div>
                 )}
@@ -1499,17 +1562,18 @@ export function TeamView() {
                       const failed = roll !== undefined && roll >= 1 && roll <= 3;
                       return (
                         <div key={c.id} className="flex flex-wrap items-center gap-3">
-                          <div
-                            className={`rounded border p-1 transition-opacity ${failed ? 'border-slate-600 bg-slate-800/50 opacity-50 grayscale' : 'border-slate-600 bg-slate-800/50'}`}
-                            title={`${c.name} (+${c.timeCost} clock${c.timeCost !== 1 ? 's' : ''})${failed ? ' — roll failed, cannot use' : ''}`}
-                          >
-                            <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
-                            <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
-                              {Array.from({ length: c.timeCost }).map((_, i) => (
-                                <span key={i}>⏰</span>
-                              ))}
-                            </span>
-                          </div>
+                          <HoverTooltip content={<CardHoverTooltipContent card={c} />} dim={failed}>
+                            <div
+                              className={`rounded border p-1 transition-opacity ${failed ? 'border-slate-600 bg-slate-800/50 opacity-50 grayscale' : 'border-slate-600 bg-slate-800/50'}`}
+                            >
+                              <img src={assetPath(c.iconPath)} alt={c.name} className="h-32 w-32 md:h-40 md:w-40 object-contain" />
+                              <span className="mt-1 flex justify-center gap-0.5 text-[10px]">
+                                {Array.from({ length: c.timeCost }).map((_, i) => (
+                                  <span key={i}>⏰</span>
+                                ))}
+                              </span>
+                            </div>
+                          </HoverTooltip>
                           <DetailsCardDiceRoller
                             roll={roll}
                             onRollComplete={(value) => setDetailsCardRoll(team.id, c.id, value)}
