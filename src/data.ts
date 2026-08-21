@@ -87,7 +87,7 @@ export const cards: Card[] = [
     description: 'CCD or sCMOS for Widefield and Spinning Disk confocal',
     category: 'microscopy',
     timeCost: 1,
-    incompatibleWith: ['mic-confocal-cf', 'img-simultaneous'],
+    incompatibleWith: ['mic-confocal-cf'],
     requires: [],
     tags: ['detector'],
     iconPath: '/cards/1-Microscopy_cards_Camera-r.png'
@@ -229,10 +229,10 @@ export const cards: Card[] = [
   {
     id: 'img-simultaneous',
     name: 'Simultaneous acquisition',
-    description: 'Aquire both channels at the same time. INCOMPATIBLE with (a single) camera detector',
+    description: 'Aquire both channels at the same time.',
     category: 'microscopy',
     timeCost: 1,
-    incompatibleWith: ['img-sequential', 'mic-camera'],
+    incompatibleWith: ['img-sequential'],
     requires: [],
     tags: ['acquisition-mode'],
     iconPath: '/cards/2-Image_cards_simul-r.png'
