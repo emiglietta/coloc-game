@@ -472,6 +472,23 @@ export function GMDashboard() {
     return (
       <div className="space-y-4 relative">
         <GMRightSidePanels openPanel={rightPanelOpen} onSetOpenPanel={setRightPanelOpen} />
+        <div className="card border border-amber-500/40 bg-amber-500/5">
+          <p className="text-sm text-slate-200">
+            <span className="font-bold">Are you new to playing the role of Reviewer 3?</span>
+            <br />
+            You can{' '}
+            <a
+              href={assetPath('/20241101_Handbook.pdf')}
+              download="Reviewer3-Handbook.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-amber-300 underline underline-offset-2 hover:text-amber-200"
+            >
+              download the Reviewer 3 pdf Handbook
+            </a>{' '}
+            for guidance and suggestions on how to respond to your players' proposed workflows.
+          </p>
+        </div>
         <div className="card">
           <h3 className="mb-3 text-sm font-semibold text-slate-200">Join as additional Reviewer 3</h3>
           <p className="mb-2 text-xs text-slate-400">Have a Reviewer 3 code from another Reviewer 3? Enter it to co-manage the session.</p>

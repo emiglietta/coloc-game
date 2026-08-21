@@ -37,7 +37,7 @@ export default function App() {
           <div className="flex items-center">
             <div className="flex h-[88px] w-[160px] shrink-0 items-center justify-center overflow-hidden md:h-[124px] md:w-[240px] lg:h-[140px] lg:w-[280px]">
               <img
-                src={assetPath('/coloc_logo.png')}
+                src={assetPath('/coLoc_logo.png')}
                 alt="coLoc Game"
                 className="h-[126px] w-auto max-w-none object-contain object-center md:h-[177px] lg:h-[200px]"
                 style={{ marginTop: '-15%', marginBottom: '-15%' }}
@@ -100,6 +100,20 @@ export default function App() {
               >
                 <span aria-hidden className="text-[1.5em] leading-none">📰</span>
                 FocalPlane article
+              </a>
+              <a
+                href="https://forum.image.sc/tag/colocalization/175"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 text-[14px] text-sky-200 hover:text-sky-100 md:text-[15px]"
+              >
+                <img
+                  src={assetPath('/forum_logo.png')}
+                  alt=""
+                  aria-hidden
+                  className="h-5 w-5 md:h-6 md:w-6 shrink-0 object-contain"
+                />
+                Colocalization questions? Ask the Forum!
               </a>
             </nav>
           </div>
