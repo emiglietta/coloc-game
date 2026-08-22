@@ -3,7 +3,7 @@ import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { useGameStore, availableCards } from './store';
 import { Card, SessionStatus } from './models';
-import { experiments, reviewIssueCards, reviewDetailsCards, acquisitionCardGroups, analysisCardGroups, acquisitionSectionConfig } from './data';
+import { experiments, reviewIssueCards, reviewDetailsCards, acquisitionCardGroups, analysisCardGroups, acquisitionSectionConfig, CardGroup } from './data';
 import { assetPath } from './assetPath';
 import { startTickLoop, stopTickLoop, playAlarmEnd, playBombEnd } from './countdownSounds';
 import { MetricsCheatsheetPanel } from './MetricsCheatsheetPanel';
@@ -109,9 +109,9 @@ const categoryColor: Record<Card['category'], string> = {
   review: 'from-orange-500/80 to-red-500/80'
 };
 
-function ClockIcons({ count }: { count: number }) {
+function ClockIcons({ count, className = 'text-xs' }: { count: number; className?: string }) {
   return (
-    <span className="text-xs">
+    <span className={`${className} whitespace-nowrap`}>
       {Array.from({ length: count }).map((_, i) => (
         <span key={i}>⏰</span>
       ))}
@@ -301,6 +301,22 @@ function isCardDisabled(
   return false;
 }
 
+/** Acquisition card groups currently relevant given what's already selected (respects `showOnlyWhenSelected`). */
+function getVisibleAcquisitionGroups(selectedAcquisition: Card[]): CardGroup[] {
+  return acquisitionCardGroups.filter((group) => {
+    if (group.showOnlyWhenSelected) {
+      const hasRequired = group.showOnlyWhenSelected.some((id) => selectedAcquisition.some((c) => c.id === id));
+      if (!hasRequired) return false;
+    }
+    return true;
+  });
+}
+
+/** The selected card (if any) belonging to a given acquisition card group. */
+function getGroupSelection(group: CardGroup, selectedAcquisition: Card[]): Card | undefined {
+  return selectedAcquisition.find((c) => group.cardIds.includes(c.id));
+}
+
 export function GMDashboard() {
   const {
     sessions,
@@ -472,6 +488,23 @@ export function GMDashboard() {
     return (
       <div className="space-y-4 relative">
         <GMRightSidePanels openPanel={rightPanelOpen} onSetOpenPanel={setRightPanelOpen} />
+        <div className="card border border-amber-500/40 bg-amber-500/5">
+          <p className="text-sm text-slate-200">
+            <span className="font-bold">Are you new to playing the role of Reviewer 3?</span>
+            <br />
+            You can{' '}
+            <a
+              href={assetPath('/20241101_Handbook.pdf')}
+              download="Reviewer3-Handbook.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-semibold text-amber-300 underline underline-offset-2 hover:text-amber-200"
+            >
+              download the Reviewer 3 pdf Handbook
+            </a>{' '}
+            for guidance and suggestions on how to respond to your players' proposed workflows.
+          </p>
+        </div>
         <div className="card">
           <h3 className="mb-3 text-sm font-semibold text-slate-200">Join as additional Reviewer 3</h3>
           <p className="mb-2 text-xs text-slate-400">Have a Reviewer 3 code from another Reviewer 3? Enter it to co-manage the session.</p>
@@ -967,15 +1000,42 @@ export function GMDashboard() {
                 <div>
                   <p className="mb-1 font-semibold text-slate-200">Acquisition</p>
                   <ul className="space-y-1">
-                    {team.selectedCards.acquisition.map((c) => (
-                      <li key={c.id} className="flex items-center justify-between">
-                        <span className={(team.gmAddedCardIds || []).includes(c.id) ? 'text-fuchsia-300' : ''}>{c.name}</span>
-                        <ClockIcons count={c.timeCost} />
-                      </li>
-                    ))}
-                    {team.selectedCards.acquisition.length === 0 && (
-                      <li className="text-slate-500">No cards yet</li>
-                    )}
+                    {getVisibleAcquisitionGroups(team.selectedCards.acquisition)
+                      .filter((group) => !group.optional)
+                      .map((group) => {
+                        const chosen = getGroupSelection(group, team.selectedCards.acquisition);
+                        return (
+                          <li key={group.label} className="flex min-w-0 items-baseline gap-1">
+                            <span className="shrink-0 text-slate-400">{group.label}:</span>
+                            {chosen ? (
+                              <span
+                                className={`flex min-w-0 items-baseline gap-1 ${
+                                  (team.gmAddedCardIds || []).includes(chosen.id) ? 'text-fuchsia-300' : ''
+                                }`}
+                              >
+                                <span className="min-w-0 truncate">{chosen.name}</span>
+                                <ClockIcons count={chosen.timeCost} className="shrink-0 text-[9px] tracking-tighter" />
+                              </span>
+                            ) : (
+                              <span className="font-semibold text-red-400">Not chosen yet</span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    {(() => {
+                      const mandatoryIds = new Set(
+                        getVisibleAcquisitionGroups(team.selectedCards.acquisition)
+                          .filter((group) => !group.optional)
+                          .flatMap((group) => group.cardIds)
+                      );
+                      const extraCards = team.selectedCards.acquisition.filter((c) => !mandatoryIds.has(c.id));
+                      return extraCards.map((c) => (
+                        <li key={c.id} className="flex min-w-0 items-baseline gap-1">
+                          <span className={`min-w-0 truncate ${(team.gmAddedCardIds || []).includes(c.id) ? 'text-fuchsia-300' : ''}`}>{c.name}</span>
+                          <ClockIcons count={c.timeCost} className="shrink-0 text-[9px] tracking-tighter" />
+                        </li>
+                      ));
+                    })()}
                   </ul>
                 </div>
                 <div>
@@ -1469,11 +1529,18 @@ export function TeamView() {
                 <div className="space-y-2">
                   {sectionGroups.map((group) => {
                     const cardsInGroup = group.cardIds.map((id) => cardById[id]).filter(Boolean);
+                    const isChosen = !group.optional && team.selectedCards.acquisition.some((c) => group.cardIds.includes(c.id));
                     return (
                       <div key={group.label} className="space-y-1">
-                        <p className="text-xs font-medium text-slate-300">
-                          {group.label}
-                          {group.optional && <span className="ml-1.5 text-slate-500">(OPTIONAL)</span>}
+                        <p className="flex items-center gap-1.5 text-xs font-medium text-slate-300">
+                          <span>{group.label}</span>
+                          {group.optional ? (
+                            <span className="text-slate-500">(OPTIONAL)</span>
+                          ) : isChosen ? (
+                            <span className="text-emerald-400" title="Card chosen">✓</span>
+                          ) : (
+                            <span className="font-semibold text-red-400">Choose 1 card</span>
+                          )}
                         </p>
                         <div className="flex flex-wrap gap-1">
                           {cardsInGroup.map((card) => (
