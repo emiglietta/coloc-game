@@ -4,6 +4,27 @@
 
 ---
 
+## v0.3.0
+
+Small usability and content updates based on player/reviewer feedback (issues [#16](https://github.com/emiglietta/coloc-game/issues/16), [#19](https://github.com/emiglietta/coloc-game/issues/19), [#20](https://github.com/emiglietta/coloc-game/issues/20)).
+
+### Added
+
+- Link to the [image.sc Community Forum](https://forum.image.sc/tag/colocalization/175) in the top banner, for players' colocalization questions.
+- Reviewer 3 Handbook download card, now visible throughout the entire game (previously only shown before creating a session).
+- Research Teams now see a clear red "Choose 1 card" / green check indicator on each mandatory Acquisition Planning row.
+- Reviewer 3 can now see, per team, which mandatory acquisition categories are still unchosen (shown in red) versus already picked (shows the chosen card).
+
+### Changed
+
+- Removed the incompatibility between the Camera detector and Simultaneous acquisition cards — dual-camera spinning disk setups can acquire simultaneously.
+
+### Fixed
+
+- Fixed the coLoc logo not loading in some environments due to a filename casing mismatch.
+
+---
+
 ## v1.0.0
 
 **First stable release** — coLoc Game (Web) is a collaborative web app for playing the coLoc board game, teaching co-localization analysis in microscopy.
