@@ -37,7 +37,7 @@ export default function App() {
           <div className="flex items-center">
             <div className="flex h-[88px] w-[160px] shrink-0 items-center justify-center overflow-hidden md:h-[124px] md:w-[240px] lg:h-[140px] lg:w-[280px]">
               <img
-                src={assetPath('/coLoc_logo.png')}
+                src={assetPath('/coloc_logo.png')}
                 alt="coLoc Game"
                 className="h-[126px] w-auto max-w-none object-contain object-center md:h-[177px] lg:h-[200px]"
                 style={{ marginTop: '-15%', marginBottom: '-15%' }}
